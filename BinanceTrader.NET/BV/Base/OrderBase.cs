@@ -11,26 +11,20 @@
 //******************************************************************************************************
 
 using BinanceAPI.Enums;
-using BTNET.BV.Enum;
+using BTNET.BV.Converters;
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
-using BTNET.Converters;
-using BTNET.ViewModels;
+using BTNET.VM.ViewModels;
 using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class OrderBase : ObservableObject
     {
         private readonly NumericFieldConverter n = new();
 
-        public ICommand CancelCommand { get; set; }
+        private OrderViewModel helper;
 
-        private SettleWidgetViewModel settle = new();
-
+        private DateTime resetTime = DateTime.MinValue;
         private DateTime time;
         private DateTime? updateTime;
         private OrderStatus status;
@@ -40,9 +34,6 @@ namespace BTNET.Base
         private string symbol, timeinforce;
         private bool isMaker = false;
         private decimal orderFee, originalQuantity, executedQuantity, price, fee, minPos, iph, ipd, itd;
-
-        public SettleWidgetViewModel SettleWidget
-        { get => this.settle; set { this.settle = value; PC(); } }
 
         public long OrderId
         {
@@ -109,6 +100,16 @@ namespace BTNET.Base
             set
             {
                 this.time = value;
+                PC();
+            }
+        }
+
+        public DateTime ResetTime
+        {
+            get => this.resetTime;
+            set
+            {
+                this.resetTime = value;
                 PC();
             }
         }
@@ -272,57 +273,7 @@ namespace BTNET.Base
         public string Fulfilled
         { get => this.n.ConvertBasic(QuantityFilled) + "/" + this.n.ConvertBasic(Quantity); set { PC(); } }
 
-        public bool CanCancel => Status is OrderStatus.New or OrderStatus.PartiallyFilled;
-
-        public bool IsOrderBuySide => Side is OrderSide.Buy;
-
-        public bool IsOrderSellSide => Side is OrderSide.Sell;
-
-        public System.Windows.Data.BindingBase TargetNullValue => null;
-
-        /// <summary>
-        /// Cancel an Order
-        /// </summary>
-        /// <param name="o">The currently selected Order</param>
-        public void Cancel(object o)
-        {
-            var order = (OrderBase)o;
-            if (order == null)
-            {
-                MiniLog.AddLine("Cancel Failed!");
-                _ = Static.MessageBox.ShowMessage($"Order canceling Failed", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            _ = Task.Run(() =>
-            {
-                var result = Static.CurrentTradingMode switch
-                {
-                    TradingMode.Spot => BTClient.Local.Spot.Order.CancelOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000),
-                    TradingMode.Margin => BTClient.Local.Margin.Order.CancelMarginOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000),
-                    TradingMode.Isolated => BTClient.Local.Margin.Order.CancelMarginOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000, isIsolated: true),
-                    _ => null,
-                };
-                if (result != null && result.Result.Success)
-                {
-                    Static.DeletedList.Add(order.OrderId);
-                    MiniLog.AddLine("Order Cancelled!");
-                    MiniLog.AddLine("Order Hidden!");
-                }
-                else
-                {
-                    MiniLog.AddLine("Cancel Failed!");
-                    _ = Static.MessageBox.ShowMessage($"Order canceling failed: {result.Result.Error.Message}", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-                return;
-            }).ConfigureAwait(false);
-        }
-
-        public OrderBase()
-        {
-            SettleWidget.InitializeCommands();
-            CancelCommand = new DelegateCommand(Cancel);
-        }
+        public OrderViewModel Helper
+        { get => helper; set { helper = value; PC(); } }
     }
 }

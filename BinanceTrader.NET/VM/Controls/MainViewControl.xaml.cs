@@ -13,7 +13,7 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace BTNET.Controls
+namespace BTNET.VM.Controls
 {
     /// <summary>
     /// Interaction logic for MainViewControl.xaml

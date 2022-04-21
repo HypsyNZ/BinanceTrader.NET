@@ -11,17 +11,18 @@
 //******************************************************************************************************
 
 using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.Base;
+using BTNET.BV.Base;
 using System.Collections.ObjectModel;
 
 namespace BTNET.BVVM
 {
-    public class Stored : ObservableObject
+    public static class Stored
     {
         public static readonly string storedExchangeInfo = Static.SettingsPath + @"ExchangeInfoCopy.json";
         public static readonly string storedSpotOrders = Static.SystemDrive + @"BNET\Orders\SpotOrders.json";
         public static readonly string storedMarginOrders = Static.SystemDrive + @"BNET\Orders\MarginOrders.json";
         public static readonly string storedIsolatedOrders = Static.SystemDrive + @"BNET\Orders\IsolatedOrders.json";
+        public static readonly string storedNotes = Static.SystemDrive + @"BNET\notes.txt";
 
         public static BinanceExchangeInfo ExchangeInfo { get; set; }
 

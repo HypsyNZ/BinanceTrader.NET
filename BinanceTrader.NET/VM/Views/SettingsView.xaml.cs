@@ -10,17 +10,17 @@
 //
 //******************************************************************************************************
 
-using BTNET.ViewModels;
+using BTNET.BVVM;
 using System.Windows;
 
-namespace BTNET.Views
+namespace BTNET.VM.Views
 {
     /// <summary>
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
     public partial class SettingsView : Window
     {
-        public SettingsView(Main datacontext)
+        public SettingsView(MainContext datacontext)
         {
             InitializeComponent();
             DataContext = datacontext;
@@ -28,17 +28,7 @@ namespace BTNET.Views
 
         private void Rectangle_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
-            {
-                if (this.WindowState == WindowState.Maximized)
-                {
-                    this.WindowState = WindowState.Normal;
-                }
-                else
-                {
-                    this.WindowState = WindowState.Maximized;
-                }
-            }
+            this.WindowState = WindowState.Normal;
 
             this.DragMove();
         }

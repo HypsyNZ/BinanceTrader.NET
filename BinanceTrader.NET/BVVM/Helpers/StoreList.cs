@@ -10,44 +10,32 @@
 //
 //******************************************************************************************************
 
-using BTNET.Abstract;
+using BTNET.BV.Abstract;
+using BTNET.BVVM.Log;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.BVVM.Helpers
 {
     public class StoreList : ObservableObject
     {
-        private static readonly StoredListLong TempListLong = new();
-        private static readonly StoredListString TempListString = new();
-
-        public static void StoreListLong(List<long> list, string path)
+        public static void StoreListLong(List<long> storedListLong, string path)
         {
             try
             {
-                if (list != null)
+                StoredListLong store = new(storedListLong);
+                if (store.List != null && store.List.Count > 0)
                 {
-                    if (File.Exists(path))
+                    File.WriteAllText(path, JsonConvert.SerializeObject(store));
+
+                    string CheckValidityOfBackup = File.ReadAllText(path).Normalize();
+                    List<long> backup = JsonConvert.DeserializeObject<StoredListLong>(CheckValidityOfBackup).List;
+
+                    if (backup != null && backup.Count > 0)
                     {
-                        string alreadyStoredList = File.ReadAllText(path);
-
-                        if (alreadyStoredList != null)
-                        {
-                            List<long> compareList = JsonConvert.DeserializeObject<StoredListLong>(alreadyStoredList).List;
-
-                            if (list == compareList)
-                            {
-                                return;
-                            }
-                        }
-                    }
-
-                    TempListLong.List = list;
-                    if (TempListLong.List != null)
-                    {
-                        File.WriteAllText(path, JsonConvert.SerializeObject(TempListLong));
+                        Backup.SaveBackup(path);
                     }
                 }
             }
@@ -57,31 +45,21 @@ namespace BTNET.BVVM.HELPERS
             }
         }
 
-        public static void StoreListString(List<string> list, string path)
+        public static void StoreListString(List<string> storedListString, string path)
         {
             try
             {
-                if (list != null)
+                StoredListString store = new(storedListString);
+                if (store != null && store.List.Count > 0)
                 {
-                    if (File.Exists(path))
+                    File.WriteAllText(path, JsonConvert.SerializeObject(store));
+
+                    string CheckValidityOfBackup = File.ReadAllText(path).Normalize();
+                    List<string> backup = JsonConvert.DeserializeObject<StoredListString>(CheckValidityOfBackup).List;
+
+                    if (backup != null && backup.Count > 0)
                     {
-                        string alreadyStoredList = File.ReadAllText(path);
-
-                        if (alreadyStoredList != null && alreadyStoredList != "")
-                        {
-                            List<string> compareList = JsonConvert.DeserializeObject<StoredListString>(alreadyStoredList).List;
-
-                            if (list == compareList)
-                            {
-                                return;
-                            }
-                        }
-                    }
-
-                    TempListString.List = list;
-                    if (TempListString.List != null)
-                    {
-                        File.WriteAllText(path, JsonConvert.SerializeObject(TempListString));
+                        Backup.SaveBackup(path);
                     }
                 }
             }

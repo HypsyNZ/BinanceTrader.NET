@@ -9,21 +9,20 @@
 //  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //
 //******************************************************************************************************
-
 using BinanceAPI.Enums;
-using BinanceAPI.Objects.Spot.SpotData;
+using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.UserStream;
 using BinanceAPI.Objects.Spot.WalletData;
-using BTNET.Base;
-using BTNET.BVVM.HELPERS;
-using ExchangeAPI.Sockets;
+using BTNET.BV.Base;
+using BTNET.BVVM.Controls;
+using BTNET.VM.ViewModels;
 using System;
 
 namespace BTNET.BVVM.BT
 {
     internal class Order : ObservableObject
     {
-        public static OrderBase NewOrder(BinanceOrder o, BinanceTradeFee btf, decimal InterestRate)
+        public static OrderBase NewOrder(BinanceOrderBase o, BinanceTradeFee btf, decimal InterestRate)
         {
             return new OrderBase()
             {
@@ -42,29 +41,31 @@ namespace BTNET.BVVM.BT
                 IsMaker = MakerNoInfo(o.Type, o.Status, btf),
                 IPH = InterestRate,
                 IPD = InterestRate,
-                ITD = (decimal)new TimeSpan(DateTime.Now.Ticks - o.CreateTime.Ticks).TotalMinutes
+                ITD = (decimal)new TimeSpan(DateTime.UtcNow.Ticks - o.CreateTime.Ticks).TotalHours,
+                Helper = new OrderViewModel(o.Side, o.Status)
             };
         }
 
-        public static OrderBase AddNewOrderOnUpdate(DataEvent<BinanceStreamOrderUpdate> data, decimal convertedPrice, BinanceTradeFee btf, decimal InterestRate)
+        public static OrderBase AddNewOrderOnUpdate(BinanceStreamOrderUpdate data, decimal convertedPrice, BinanceTradeFee btf, decimal InterestRate)
         {
             return new OrderBase
             {
-                OrderId = data.Data.OrderId,
-                Symbol = data.Data.Symbol,
-                QuantityFilled = data.Data.QuantityFilled,
-                Quantity = Helpers.TrimDecimal(data.Data.Quantity),
-                OrderFee = TradeFeeTakerMaker(data.Data.BuyerIsMaker, btf),
+                OrderId = data.OrderId,
+                Symbol = data.Symbol,
+                QuantityFilled = data.QuantityFilled,
+                Quantity = DecimalLayout.TrimDecimal(data.Quantity),
+                OrderFee = TradeFeeTakerMaker(data.BuyerIsMaker, btf),
                 Price = convertedPrice,
-                CreateTime = data.Data.CreateTime,
-                Status = data.Data.Status,
-                Side = data.Data.Side,
-                Type = data.Data.Type,
-                TimeInForce = data.Data.TimeInForce.ToString(),
-                IsMaker = data.Data.BuyerIsMaker,
+                CreateTime = data.CreateTime,
+                Status = data.Status,
+                Side = data.Side,
+                Type = data.Type,
+                TimeInForce = data.TimeInForce.ToString(),
+                IsMaker = data.BuyerIsMaker,
                 IPH = InterestRate,
                 IPD = InterestRate,
-                ITD = (decimal)new TimeSpan(DateTime.Now.Ticks - data.Data.EventTime.Ticks).TotalMinutes,
+                ITD = (decimal)new TimeSpan(DateTime.UtcNow.Ticks - data.CreateTime.Ticks).TotalHours,
+                Helper = new OrderViewModel(data.Side, data.Status)
             };
         }
 

@@ -10,15 +10,17 @@
 //
 //******************************************************************************************************
 
+using BTNET.BV.Enum;
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
 using System;
 using System.Threading.Tasks;
 
 // todo: Check Slow Price of "other" symbols
 // todo: Add "Retrigger Price"
 // todo: Make "Order Builder" so Alerts can have Actions
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class AlertItem : ObservableObject
     {
@@ -197,7 +199,7 @@ namespace BTNET.Base
             {
                 if (AlertHasSound)
                 {
-                    Helpers.PlaySound();
+                    Sound.PlaySound();
                 }
 
                 //if (AlertHasAction && AlertAction != null)
@@ -205,8 +207,6 @@ namespace BTNET.Base
                 //    // Do literally any task when conditions are met
                 //AlertTask = Task.Run(() => AlertAction);
                 //}
-
-                MiniLog.AddLine("AP: " + AlertPrice + " | " + AlertSymbol + "!");
 
                 WriteLog.Alert("[x_o] Alert Price: " + AlertPrice + "| Alert Symbol: " + AlertSymbol + " | Repeat Interval:" + RepeatInterval);
             });

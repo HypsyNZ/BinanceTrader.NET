@@ -13,7 +13,7 @@
 using BTNET.BVVM;
 using System;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class ServerTimeBase : ObservableObject
     {

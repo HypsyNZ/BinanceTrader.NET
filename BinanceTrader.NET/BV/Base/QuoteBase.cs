@@ -12,9 +12,10 @@
 
 using BTNET.BV.Enum;
 using BTNET.BVVM;
+using BTNET.BVVM.Log;
 using System;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class QuoteBase : ObservableObject
     {

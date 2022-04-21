@@ -10,7 +10,7 @@
 //
 //******************************************************************************************************
 
-namespace BTNET.Base
+namespace BTNET.BV.Enum
 {
     /// <summary>
     /// todo: Automate Ordering

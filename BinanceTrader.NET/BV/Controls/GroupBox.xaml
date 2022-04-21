@@ -1,0 +1,73 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+    <Style TargetType="GroupBox">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupBox">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="20" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border
+                                    Grid.Row="0"
+                                    BorderThickness="1.1"
+                                    CornerRadius="2,2,0,0">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1" Opacity="0.8">
+                                    <LinearGradientBrush.GradientStops>
+                                        <GradientStopCollection>
+                                            <GradientStop Offset="0.2" Color="{DynamicResource BorderLightColor}" />
+                                            <GradientStop Offset="0.4" Color="{DynamicResource BorderDarkColor}" />
+                                        </GradientStopCollection>
+                                    </LinearGradientBrush.GradientStops>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1" Opacity="0.8">
+                                    <LinearGradientBrush.GradientStops>
+                                        <GradientStopCollection>
+                                            <GradientStop Offset="0.01" Color="{DynamicResource ControlMediumColor}" />
+                                            <GradientStop Offset="0.2" Color="{DynamicResource ControlDarkColor}" />
+                                            <GradientStop Offset="1" Color="{DynamicResource ControlMediumColor}" />
+                                        </GradientStopCollection>
+                                    </LinearGradientBrush.GradientStops>
+                                </LinearGradientBrush>
+                            </Border.Background>
+
+                            <ContentPresenter
+                                        Margin="-3"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        ContentSource="Header"
+                                        RecognizesAccessKey="True" />
+                        </Border>
+
+                        <Border
+                                    Grid.Row="1"
+                                    BorderThickness="1,1,1,1"
+                                    CornerRadius="0,0,2,2">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1" Opacity="0.8">
+                                    <LinearGradientBrush.GradientStops>
+                                        <GradientStopCollection>
+                                            <GradientStop Offset="0.4" Color="{DynamicResource BorderLightColor}" />
+                                            <GradientStop Offset="0.2" Color="{DynamicResource BorderDarkColor}" />
+                                        </GradientStopCollection>
+                                    </LinearGradientBrush.GradientStops>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                            <Border.Background>
+                                <LinearGradientBrush MappingMode="RelativeToBoundingBox" StartPoint="0.3,0" EndPoint="0.6,1" Opacity="0.8">
+                                    <GradientStop Offset="0" Color="{DynamicResource ContentAreaColorLight}" />
+                                    <GradientStop Offset="1" Color="{DynamicResource ContentAreaColorDark}" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <ContentPresenter Margin="3" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

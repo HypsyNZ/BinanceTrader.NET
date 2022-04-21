@@ -10,43 +10,43 @@
 //
 //******************************************************************************************************
 
-using ExchangeAPI.Objects;
-using log4net;
+using BinanceAPI.Objects;
+using SimpleLog4.NET;
 using System;
 using System.Threading.Tasks;
 
-namespace BTNET.BVVM
+namespace BTNET.BVVM.Log
 {
     public static class WriteLog
     {
-        private static readonly ILog log = LogManager.GetLogger("General");
-        private static readonly ILog loga = LogManager.GetLogger("Alerts");
+        private static SimpleLog4.NET.Log LogGeneral = new(@"C:\\BNET\\log.txt", true, logLevel: LogLevel.Information);
+        private static SimpleLog4.NET.Log LogAlert = new(@"C:\\BNET\\alerts.txt", true, logLevel: LogLevel.Information);
 
         #region [ Static ]
 
-        public static void Alert(object message)
+        public static void Alert(string m)
         {
-            loga.Info(message);
+            LogAlert.Info(m);
         }
 
-        public static void Info(object message)
+        public static void Info(string m)
         {
-            log.Info(message);
+            LogGeneral.Info(m);
         }
 
-        public static void Info(object message, Exception ex)
+        public static void Error(string m)
         {
-            log.Info(message, ex);
+            LogGeneral.Error(m);
         }
 
-        public static void Error(object message)
+        public static void Error(Exception ex)
         {
-            log.Error(message);
+            LogGeneral.Error(ex);
         }
 
-        public static void Error(object message, Exception ex)
+        public static void Error(string m, Exception ex)
         {
-            log.Error(message, ex);
+            LogGeneral.Error(m,ex);
         }
 
         // -1000 UNKNOWN

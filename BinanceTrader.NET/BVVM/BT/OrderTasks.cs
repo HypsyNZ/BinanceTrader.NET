@@ -13,8 +13,9 @@
 using BinanceAPI.Enums;
 using BinanceAPI.Interfaces;
 using BinanceAPI.Objects.Spot.IsolatedMarginData;
-using BTNET.Base;
+using BTNET.BV.Base;
 using BTNET.BV.Enum;
+using BTNET.BVVM.Log;
 using LoopDelay.NET;
 using System;
 using System.Collections.ObjectModel;
@@ -23,7 +24,7 @@ using System.Threading.Tasks;
 
 namespace BTNET.BVVM.BT
 {
-    internal class Settle : ObservableObject
+    internal class OrderTasks : ObservableObject
     {
         /// <summary>
         /// Creates a discardable <see cref="Task"/> and Settles Requested Asset
@@ -64,13 +65,11 @@ namespace BTNET.BVVM.BT
 
                     if (resultQ.Result.Success)
                     {
-                        MiniLog.AddLine("Settled: " + Asset);
                         WriteLog.Info("Repay was Successful, Settled: " + Asset + " | " + resultQ.Result.Data.TransactionId + "| Isolated: " + isolated);
                         return true;
                     }
                     else
                     {
-                        MiniLog.AddLine("Settle Failed!");
                         WriteLog.Error(resultQ.Result.Error.Message + " | Isolated: " + isolated);
                         WriteLog.Info("DEBUG SETTLE: Asset :" + Asset + " | freeAmount :" + freeAmount + " | borrowedAmount :" + borrowedAmount + " | Symbol :" + Symbol + " | isolated :" + isolated);
                         return false;
@@ -142,7 +141,7 @@ namespace BTNET.BVVM.BT
         /// <param name="orderSide">The OrderSide</param>
         /// <param name="borrow">true if the newly placed order should borrow where available
         /// </param>
-        public static void ProcessOrder(OrderBase order, OrderSide orderSide, bool borrow)
+        public static void ProcessOrder(OrderBase order, OrderSide orderSide, bool borrow, bool settle = true)
         {
             Task.Run(async () =>
             {
@@ -151,31 +150,23 @@ namespace BTNET.BVVM.BT
 
                 await Trade.PlaceOrder(order.Symbol, order.QuantityFilled, order.Price, Static.CurrentTradingMode, borrow, orderSide).ConfigureAwait(false);
 
+                if (!settle) { return; }
+
                 var startTime = DateTime.UtcNow.Ticks;
-#if DEBUG
-                MiniLog.AddLine("Before: " + amountBeforeOrder);
-                int t = 0;
-#endif
                 while (await Loop.Delay(startTime, 3, 3000).ConfigureAwait(false))
                 {
                     settleAmount = CurrentAvailableAmount(Static.CurrentSymbolInfo.BaseAsset);
                     if (settleAmount != amountBeforeOrder) { break; }
-#if DEBUG
-                    MiniLog.AddLine("t1: " + t); t++;
-#endif
                 }
 
                 if (amountBeforeOrder + order.QuantityFilled == settleAmount)
                 {
-#if DEBUG
-                    MiniLog.AddLine("Defer");
-#endif
                     settleAmount = await Defer(startTime, settleAmount).ConfigureAwait(false);
                 }
 
                 if (settleAmount != 0)
                 {
-                    await Settle.SettleAsset(settleAmount, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin).ConfigureAwait(false);
+                    await OrderTasks.SettleAsset(settleAmount, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin).ConfigureAwait(false);
                 }
                 else
                 {
@@ -187,16 +178,10 @@ namespace BTNET.BVVM.BT
         private static async Task<decimal> Defer(long startTime, decimal amountBeforeDefer)
         {
             var deferAmount = amountBeforeDefer;
-#if DEBUG
-            int t = 0;
-#endif
             while (await Loop.Delay(startTime, 3, 2000).ConfigureAwait(false))
             {
                 deferAmount = CurrentAvailableAmount(Static.CurrentSymbolInfo.BaseAsset);
                 if (amountBeforeDefer != deferAmount) { break; }
-#if DEBUG
-                MiniLog.AddLine("t1: " + t); t++;
-#endif
             }
 
             return deferAmount;

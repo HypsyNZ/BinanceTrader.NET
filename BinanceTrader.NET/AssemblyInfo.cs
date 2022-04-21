@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
-[assembly: Guid("adbb6524-9bc3-46e0-8aca-71b38d505c66")]
-[assembly: log4net.Config.XmlConfigurator(Watch = true)]
+[assembly: Guid("186F1FCB-79DA-4FF2-A8EE-97C4508F0FEF")]

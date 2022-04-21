@@ -10,10 +10,11 @@
 //
 //******************************************************************************************************
 
-using BTNET.Abstract;
-using BTNET.Base;
+using BTNET.BV.Abstract;
+using BTNET.BV.Base;
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,10 +23,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class WatchlistViewModel : ObservableObject
     {
+        private static bool RestoreWatchListAttempted { get; set; } = false;
+
         public ICommand RemoveFromWatchlistCommand { get; set; }
         public ICommand AddToWatchlistCommand { get; set; }
 
@@ -64,12 +67,33 @@ namespace BTNET.ViewModels
                 string watchlistSymbols = File.ReadAllText(Static.listofwatchlistsymbols);
                 if (watchlistSymbols != null && watchlistSymbols != "")
                 {
-                    List<string> StoredwatchlistSymbols = JsonConvert.DeserializeObject<StoredListString>(watchlistSymbols).List;
-                    if (StoredwatchlistSymbols != null)
+                    try
                     {
-                        foreach (string Symbol in StoredwatchlistSymbols)
+                        List<string> StoredwatchlistSymbols = JsonConvert.DeserializeObject<StoredListString>(watchlistSymbols).List;
+
+                        if (StoredwatchlistSymbols != null)
                         {
-                            AddWatchlistItem(Symbol);
+                            foreach (string Symbol in StoredwatchlistSymbols)
+                            {
+                                AddWatchlistItem(Symbol);
+                            }
+                        }
+                    }
+                    catch (JsonSerializationException)
+                    {
+                        File.Delete(Static.listofwatchlistsymbols);
+
+                        if (!RestoreWatchListAttempted)
+                        {
+                            RestoreWatchListAttempted = Backup.RestoreBackup(Static.listofwatchlistsymbols, "WatchList");
+                            InitializeWatchList();
+
+                            WriteLog.Error("Watchlist failed to deserialize and was restored");
+                        }
+                        else
+                        {
+                            File.Delete(Static.listofwatchlistsymbols + ".bak");
+                            WriteLog.Error("The backup for WatchList was damaged so it was deleted!");
                         }
                     }
                 }
@@ -82,7 +106,7 @@ namespace BTNET.ViewModels
         {
             Task.Run(() =>
             {
-                if (Static.AllPrices.Where(x => x.SymbolView.Symbol == WatchlistSymbol).FirstOrDefault() != null)
+                if (Static.AllPricesUnfiltered.Where(x => x.SymbolView.Symbol == WatchlistSymbol).FirstOrDefault() != null)
                 {
                     WatchlistItem watchListItem = new WatchlistItem();
                     watchListItem.WatchlistSymbol = WatchlistSymbol;
@@ -104,7 +128,7 @@ namespace BTNET.ViewModels
 
         public void AddWatchlistItem(string Symbol)
         {
-            if (Static.AllPrices.Where(x => x.SymbolView.Symbol == Symbol) != null)
+            if (Static.AllPricesUnfiltered.Where(x => x.SymbolView.Symbol == Symbol) != null)
             {
                 WatchlistItem watchListItem = new WatchlistItem();
                 watchListItem.WatchlistSymbol = Symbol;
@@ -149,7 +173,7 @@ namespace BTNET.ViewModels
                     Invoke.InvokeUI(() =>
                     {
                         WatchListItems.Remove(SelectedWatchlistItem);
-                        MiniLog.AddLine("Removed Watchlist Item..");
+                        WriteLog.Info("Removed Watchlist Symbol: " + SelectedWatchlistItem.WatchlistSymbol);
                     });
                 }
                 else

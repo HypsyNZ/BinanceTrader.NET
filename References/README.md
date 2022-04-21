@@ -1,13 +1,14 @@
 |Name                    | Version |Framework       |Link                                           |
 |------------------------|---------|----------------|-----------------------------------------------|
-| TimerSink.NET.dll      | 2.0     | .NET	4.8     |https://github.com/HypsyNZ/Timer-Sink.NET      |
-| PrecisionTimer.NET.dll | 2.0     | .NET	4.8     |https://github.com/HypsyNZ/Precision-Timer.NET |
-| LoopDelay.NET.dll      | 1.0     | netstandard2.0 |https://github.com/HypsyNZ/LoopDelay.NET       |
-| BinanceAPI.dll         | 2.0     | netstandard2.0 |https://github.com/HypsyNZ/Binance-API         |
-| ExchangeAPI.dll        | 1.2     | netstandard2.0 |https://github.com/HypsyNZ/Exchange-API        |
+| BinanceAPI.dll         | 3.1.7   | netstandard2.0 |https://github.com/HypsyNZ/Binance-API         |
+| CandyShop.dll          | 1.0     | .NET       4.8 |https://github.com/HypsyNZ/CandyShop           |
 
 These references are supplied for your convenience and you can easily build them all yourself.
 
-You will experience issues if you use other versions without modification.
+NuGet Packages can be installed with the package manager
 
-These references and repos will be maintained.
+|Name                    | Version |Framework       |Link                                           |
+|------------------------|---------|----------------|-----------------------------------------------|
+| SimpleLog4.NET	 | 1.0.4   | netstandard2.0 |https://nuget.org/packages/SimpleLog4.NET      |
+| TimerSink.NET	         | 4.2.5   | netstandard2.0 |https://nuget.org/packages/TimerSink.NET       |
+| LoopDelay.NET          | 1.0.2   | netstandard2.0 |https://nuget.org/packages/LoopDelay.NET       |

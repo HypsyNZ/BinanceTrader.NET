@@ -1,12 +1,9 @@
 ﻿using BinanceAPI.Objects.Spot.MarginData;
-using BinanceAPI.Objects.Spot.MarketData;
 using BinanceAPI.Objects.Spot.WalletData;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Log;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -22,7 +19,6 @@ namespace BTNET.BVVM
                 if (exchangeInfoResult.Success)
                 {
                     WriteLog.Info("Updated Exchange Information..");
-                    Stored.ExchangeInfo = exchangeInfoResult.Data;
                     Static.ManageExchangeInfo.UpdateAndStoreExchangeInfo(exchangeInfoResult.Data);
                 }
                 else
@@ -41,13 +37,13 @@ namespace BTNET.BVVM
             }
         }
 
-        public static async Task<bool> ExchangeInfoAllPrices()
+        public static async Task ExchangeInfoAllPrices()
         {
             Static.ShouldUpdateExchangeInfo = false;
 
-            await ExchangeInformation().ConfigureAwait(false);
+            await ExchangeInformation();
 
-            return await Search.SearchPricesUpdate().ConfigureAwait(false);
+            await Search.SearchPricesUpdate();
         }
 
         public static void StoredExchangeInformation(string errormessage)
@@ -69,26 +65,21 @@ namespace BTNET.BVVM
             }
         }
 
-        public static BinanceTradeFee GetTradeFee()
+        public static async Task<BinanceTradeFee> GetTradeFee()
         {
-            var TradeFee = BTClient.Local.Spot.Market.GetTradeFeeAsync(Static.CurrentSymbolInfo.Name);
-            if (TradeFee.Result.Success)
+            var TradeFee = await BTClient.Local.Spot.Market.GetTradeFeeAsync(Static.CurrentSymbolInfo.Name, receiveWindow: 5000);
+            if (TradeFee.Success)
             {
-                var tf = TradeFee.Result.Data.First();
+                var tf = TradeFee.Data.First();
                 if (tf != null)
                 {
                     if (tf.TakerFee == tf.MakerFee)
                     {
                         WriteLog.Info("[Main] Trade Fees for " + tf.Symbol + " | Trade Fee: [" + tf.TakerFee + "]" + "(" + (tf.TakerFee * 100) + "%)");
-                        MiniLog.AddLine("Trade Fee is: " + tf.TakerFee + "(" + (tf.TakerFee * 100) + "%)");
                     }
                     else
                     {
                         WriteLog.Info("[Main] Trade Fees for " + tf.Symbol + " | Taker Fee: [" + tf.TakerFee + "](" + (tf.TakerFee * 100) + " %) | Maker Fee: [" + tf.MakerFee + "](" + (tf.MakerFee * 100) + " %)");
-                        MiniLog.AddLine("Maker Fee is: " + tf.MakerFee + "(" + (tf.MakerFee * 100) + "%)");
-                        MiniLog.AddLine("Taker Fee is: " + tf.TakerFee + "(" + (tf.TakerFee * 100) + "%)");
-                        MiniLog.AddLine("Trade Fee Mismatch!");
-                        MiniLog.AddLine("Min PnL may be wrong!");
                     }
 
                     return tf;

@@ -11,13 +11,14 @@
 //******************************************************************************************************
 
 using BinanceAPI;
+using BinanceAPI.Authentication;
 using BinanceAPI.Objects;
 using BTNET.BV.Enum;
 using BTNET.BVVM;
 using BTNET.BVVM.BT;
-using BTNET.BVVM.HELPERS;
-using BTNET.Views;
-using ExchangeAPI.Authentication;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
+using BTNET.VM.Views;
 using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
@@ -26,21 +27,25 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class MainViewModel : ObservableObject
     {
         public AlertsView AlertsView;
         public WatchlistView WatchlistView;
         public SettingsView SettingsView;
+        public StatusView StatusView;
+        public NotepadView NotepadView;
+        public AboutView AboutView;
 
+        private int hidesidemenu = 0;
         private string chart;
-        private bool isCurrentlyLoading = false;
-        private bool isWatchlistStillLoading = false;
+        private bool isIsolated = false, isMargin = false, isWatchlistStillLoading = false, isCurrentlyLoading = false, shouldSuspendSymbolSelection = true;
 
-        private Main M = null;
+        private MainContext M = null;
+        private ObservableCollection<BinanceSymbolViewModel> allPrices;
 
-        public MainViewModel(Main m)
+        public MainViewModel(MainContext m)
         {
             M = m;
         }
@@ -58,22 +63,25 @@ namespace BTNET.ViewModels
             BuyCommand = new DelegateCommand(Buy);
             SellCommand = new DelegateCommand(Sell);
 
-            SettingsCommand = new DelegateCommand(Settings);
-            WatchlistCommand = new DelegateCommand(ShowWatchlist);
-            AlertsCommand = new DelegateCommand(ShowAlerts);
+            ToggleSettingsCommand = new DelegateCommand(ToggleSettings);
+            ToggleWatchlistCommand = new DelegateCommand(ToggleWatchlist);
+            ToggleStratViewCommand = new DelegateCommand(ToggleStatusView);
+            ToggleAboutViewCommand = new DelegateCommand(ToggleAboutView);
+            ToggleNotepadViewCommand = new DelegateCommand(ToggleNotepadView);
+            ToggleAlertsCommand = new DelegateCommand(ToggleAlerts);
+            ToggleConsoleCommand = new DelegateCommand(ToggleConsole);
 
-            CloseSettingsCommand = new DelegateCommand(CloseSettings);
-            CloseAlertsCommand = new DelegateCommand(CloseAlerts);
-            CloseWatchlistCommand = new DelegateCommand(CloseWatchlist);
             HideMenuCommand = new DelegateCommand(HideSymbolMenu);
         }
 
-        public ICommand SettingsCommand { get; set; }
-        public ICommand AlertsCommand { get; set; }
-        public ICommand WatchlistCommand { get; set; }
-        public ICommand CloseSettingsCommand { get; set; }
-        public ICommand CloseAlertsCommand { get; set; }
-        public ICommand CloseWatchlistCommand { get; set; }
+        public ICommand ToggleConsoleCommand { get; set; }
+        public ICommand ToggleSettingsCommand { get; set; }
+        public ICommand ToggleAlertsCommand { get; set; }
+        public ICommand ToggleWatchlistCommand { get; set; }
+        public ICommand ToggleStratViewCommand { get; set; }
+        public ICommand ToggleAboutViewCommand { get; set; }
+        public ICommand ToggleNotepadViewCommand { get; set; }
+
         public ICommand HideMenuCommand { get; set; }
 
         public ICommand BuyCommand { get; set; }
@@ -93,6 +101,9 @@ namespace BTNET.ViewModels
         public string LoadingText
         { get => (isCurrentlyLoading && IsWatchlistStillLoading) ? "Loading: Please Wait..." : IsWatchlistStillLoading ? "Watchlist: Still Connecting..." : "Loading: Please Wait..."; set { PC(); } }
 
+        public bool ShouldSuspendSymbolSelection
+        { get => shouldSuspendSymbolSelection; set { shouldSuspendSymbolSelection = value; PC(); } }
+
         public bool IsCurrentlyLoading
         { get => isCurrentlyLoading || IsWatchlistStillLoading; set { isCurrentlyLoading = value; LoadingText = ""; PC(); } }
 
@@ -101,17 +112,11 @@ namespace BTNET.ViewModels
 
         #endregion [ Loading ]
 
-        private int hidesidemenu = 0;
-        private bool isIsolated = false, isMargin = false;
-
         public bool IsIsolated
         { get => isIsolated; set { isIsolated = value; PC(); } }
 
         public bool IsMargin
         { get => isMargin; set { isMargin = value; PC(); } }
-
-        public string MiniLogOut
-        { get => MiniLog.MiniLogString; set { PC(); } }
 
         public string Chart
         { get => this.chart; set { this.chart = value; PC(); } }
@@ -125,23 +130,11 @@ namespace BTNET.ViewModels
         public string ApiKey
         { get => this.UserApiKeys.ApiKey; set { this.UserApiKeys.ApiKey = value; PC(); } }
 
-        private ObservableCollection<BinanceSymbolViewModel> allPrices;
-
         public ObservableCollection<BinanceSymbolViewModel> AllSymbolsOnUI
         { get => this.allPrices; set { this.allPrices = value; PC(); } }
 
-        public static int SelectedTabUI
-        { get => (int)Static.CurrentlySelectedSymbolTab; set { Static.CurrentlySelectedSymbolTab = (SelectedTab)value; } }
-
-        private void GotFocus(object o)
-        {
-            Static.IsListFocus = true;
-        }
-
-        private void LostFocus(object o)
-        {
-            Static.IsListFocus = false;
-        }
+        public int SelectedTabUI
+        { get => (int)Static.CurrentlySelectedSymbolTab; set { Static.CurrentlySelectedSymbolTab = (SelectedTab)value; PC(); } }
 
         private void SaveSettings(object o)
         {
@@ -169,11 +162,12 @@ namespace BTNET.ViewModels
         {
             WriteLog.Info("Shutting Down..");
 
-            Sink.Stop();
-            SinkRT.Stop();
-
             try
             {
+                Timers?.DisposeWatchdog();
+                Sink?.Stop();
+                NotepadVM?.SaveNotes();
+
                 foreach (Window w in Application.Current.Windows)
                 {
                     w.Hide();
@@ -184,7 +178,7 @@ namespace BTNET.ViewModels
                 {
                     WriteLog.Info("Storing Orders..");
                     StoreList.StoreListLong(Static.DeletedList, Static.listofdeletedorders);
-                    Static.ManageStoredOrders.AddCurrentOrdersToCollections(Static.GetOrders);
+                    Static.ManageStoredOrders.AddCurrentOrdersToCollections(MainOrders.GetOrders);
                     Static.ManageStoredOrders.StoreAllOrderCollections();
 
                     if (!IsWatchlistStillLoading)
@@ -267,57 +261,222 @@ namespace BTNET.ViewModels
             }
         }
 
+        private void ToggleConsole(object o)
+        {
+            if (!ConsoleAllocator.ConsoleWindowOpen)
+            {
+                ConsoleAllocator.ShowConsoleWindow();
+            }
+            else
+            {
+                ConsoleAllocator.HideConsoleWindow();
+            }
+        }
+
+        private void GotFocus(object o)
+        {
+            Static.IsListFocus = true;
+        }
+
+        private void LostFocus(object o)
+        {
+            Static.IsListFocus = false;
+        }
+
         public bool IsListValidTarget()
         {
             return SelectedListItem != null && Static.IsListFocus;
         }
 
-        private void ShowAlerts(object o)
+        private void ToggleAlerts(object o)
         {
             if (AlertsView == null)
             {
                 AlertsView = new AlertsView(M);
                 AlertsView.Show();
             }
+            else
+            {
+                AlertsView?.Close();
+                AlertsView = null;
+            }
         }
 
-        private void Settings(object o)
+        private void ToggleSettings(object o)
         {
-            SettingsView = new SettingsView(M);
-            _ = SettingsView.ShowDialog();
+            if (SettingsView == null)
+            {
+                SettingsView = new SettingsView(M);
+                SettingsView.Show();
+            }
+            else
+            {
+                SettingsView?.Close();
+                SettingsView = null;
+            }
         }
 
-        private void ShowWatchlist(object o)
+        private void ToggleWatchlist(object o)
         {
             if (WatchlistView == null)
             {
                 WatchlistView = new WatchlistView(M);
                 WatchlistView.Show();
             }
+            else
+            {
+                WatchlistView?.Close();
+                WatchlistView = null;
+            }
+        }
+
+        private void ToggleStatusView(object o)
+        {
+            if (StatusView == null)
+            {
+                StatusView = new StatusView(M);
+                StatusView.Show();
+            }
+            else
+            {
+                StatusView?.Close();
+                StatusView = null;
+            }
+        }
+
+        private void ToggleAboutView(object o)
+        {
+            if (AboutView == null)
+            {
+                AboutView = new AboutView(M);
+                AboutView.Show();
+            }
+            else
+            {
+                AboutView?.Close();
+                AboutView = null;
+            }
+        }
+
+        private void ToggleNotepadView(object o)
+        {
+            if (NotepadView == null)
+            {
+                NotepadView = new NotepadView(M);
+                NotepadView.Show();
+            }
+            else
+            {
+                NotepadView?.Close();
+                NotepadView = null;
+                NotepadVM.SaveNotes();
+            }
         }
 
         public void HideSymbolMenu(object o)
         {
-            if (HideSideMenu == 200) { HideSideMenu = 0; } else { HideSideMenu = 200; PC(); }
+            if (HideSideMenu == 200)
+            {
+                HideSideMenu = 0;
+
+                if ((Controls.CanvasControl.BorrowBoxLeft + 200) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.BorrowBoxLeft < -200)
+                {
+                    _ = ResetBorrowBox().ConfigureAwait(false);
+                }
+
+                if ((Controls.CanvasControl.MarginBoxLeft + 200) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.MarginBoxLeft < -200)
+                {
+                    _ = ResetMarginInfo().ConfigureAwait(false);
+                }
+
+                if ((Controls.CanvasControl.RealTimeLeft + 200) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.RealTimeLeft < -5)
+                {
+                    _ = ResetRealTime().ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                if ((Controls.CanvasControl.BorrowBoxLeft + 20) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.BorrowBoxLeft < -200)
+                {
+                    _ = ResetBorrowBox().ConfigureAwait(false);
+                }
+
+                if ((Controls.CanvasControl.MarginBoxLeft + 20) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.MarginBoxLeft < -200)
+                {
+                    _ = ResetMarginInfo().ConfigureAwait(false);
+                }
+
+                if ((Controls.CanvasControl.RealTimeLeft + 20) > Controls.CanvasControl.CanvasActualWidth || Controls.CanvasControl.RealTimeLeft < -5)
+                {
+                    _ = ResetRealTime().ConfigureAwait(false);
+                }
+
+                HideSideMenu = 200;
+            }
         }
 
-        private void CloseAlerts(object o)
+        public Task ResetControlPositions()
         {
-            AlertsView?.Close();
-            AlertsView = null;
+            _ = ResetRealTime().ConfigureAwait(false);
+            _ = ResetBorrowBox().ConfigureAwait(false);
+            _ = ResetMarginInfo().ConfigureAwait(false);
+            OrderPositionReset = new GridLength(80);
+
+            return Task.CompletedTask;
         }
 
-        private void CloseSettings(object o)
+        public async Task ResetRealTime()
         {
-            SettingsView?.Close();
-            SettingsView = null;
+            await Task.Delay(500);
+            ResetRealTimeLeft = 1055;
+            ResetRealTimeTop = -400;
         }
 
-        private void CloseWatchlist(object o)
+        public async Task ResetBorrowBox()
         {
-            WatchlistView?.Close();
-            WatchlistView = null;
+            await Task.Delay(500);
+            ResetBorrowBoxLeft = 10;
+            ResetBorrowBoxTop = -170;
         }
+
+        public async Task ResetMarginInfo()
+        {
+            await Task.Delay(500);
+            ResetMarginInfoLeft = 110;
+            ResetMarginInfoTop = -170;
+        }
+
+        public double resetRealTimeLeft = 1055;
+        public double resetRealTimeTop = -400;
+
+        public double ResetRealTimeLeft
+        { get => resetRealTimeLeft; set { resetRealTimeLeft = value; PC(); } }
+
+        public double ResetRealTimeTop
+        { get => resetRealTimeTop; set { resetRealTimeTop = value; PC(); } }
+
+        public double resetBorrowBoxLeft = 10;
+        public double resetBorrowBoxTop = -170;
+
+        public double ResetBorrowBoxLeft
+        { get => resetBorrowBoxLeft; set { resetBorrowBoxLeft = value; PC(); } }
+
+        public double ResetBorrowBoxTop
+        { get => resetBorrowBoxTop; set { resetBorrowBoxTop = value; PC(); } }
+
+        private double resetMarginInfoLeft = 110;
+        private double resetMarginInfoTop = -170;
+
+        public double ResetMarginInfoLeft
+        { get => resetMarginInfoLeft; set { resetMarginInfoLeft = value; PC(); } }
+
+        public double ResetMarginInfoTop
+        { get => resetMarginInfoTop; set { resetMarginInfoTop = value; PC(); } }
+
+        public GridLength orderPositionReset = new GridLength(80);
+
+        public GridLength OrderPositionReset
+        { get => orderPositionReset; set { orderPositionReset = value; PC(); } }
 
         #endregion [Controls]
     }

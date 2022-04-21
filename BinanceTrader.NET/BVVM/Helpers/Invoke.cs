@@ -10,10 +10,12 @@
 //
 //******************************************************************************************************
 
+using BTNET.BVVM.Log;
 using System;
 using System.Windows;
+using System.Windows.Threading;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.BVVM.Helpers
 {
     public static class Invoke
     {
@@ -21,13 +23,26 @@ namespace BTNET.BVVM.HELPERS
         {
             try
             {
-                if (Application.Current.Dispatcher.CheckAccess()) { action(); return; }
+                Dispatcher dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    if (dispatcher.CheckAccess()) { action(); return; }
 
-                Application.Current.Dispatcher.Invoke(delegate { action(); });
+                    dispatcher.Invoke(delegate
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog.Error("Invoke Error: ", ex);
+                        }
+                    });
+                }
             }
-            catch (Exception e)
+            catch
             {
-                WriteLog.Info("Invoke Error Reason: " + e.Message + "Inner Exception: " + e.InnerException + " | Stack Trace: " + e.StackTrace + " | HResult: " + e.HResult);
             }
         }
 
@@ -35,13 +50,26 @@ namespace BTNET.BVVM.HELPERS
         {
             try
             {
-                if (Application.Current.Dispatcher.CheckAccess()) { action(); return; }
+                Dispatcher dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    if (dispatcher.CheckAccess()) { action(); return; }
 
-                Application.Current.Dispatcher.BeginInvoke((Action)delegate { action(); });
+                    dispatcher.BeginInvoke((Action)delegate
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog.Error("BeginInvoke Error: ", ex);
+                        }
+                    });
+                }
             }
-            catch (Exception e)
+            catch
             {
-                WriteLog.Info("Begin Invoke Error Reason: " + e.Message + "Inner Exception: " + e.InnerException + " | Stack Trace: " + e.StackTrace + " | HResult: " + e.HResult);
             }
         }
     }

@@ -10,18 +10,18 @@
 //
 //******************************************************************************************************
 
-using BTNET.ViewModels;
+using BTNET.BVVM;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BTNET.Views
+namespace BTNET.VM.Views
 {
     /// <summary>
     /// Interaction logic for WatchlistView.xaml
     /// </summary>
     public partial class WatchlistView : Window
     {
-        public WatchlistView(Main datacontext)
+        public WatchlistView(MainContext datacontext)
         {
             InitializeComponent();
             this.Topmost = true;
@@ -30,17 +30,7 @@ namespace BTNET.Views
 
         private void DragWindowOrMaximize(object sender, MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
-            {
-                if (this.WindowState == WindowState.Maximized)
-                {
-                    this.WindowState = WindowState.Normal;
-                }
-                else
-                {
-                    this.WindowState = WindowState.Maximized;
-                }
-            }
+            this.WindowState = WindowState.Normal;
 
             this.DragMove();
         }

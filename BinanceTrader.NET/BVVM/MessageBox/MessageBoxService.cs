@@ -10,6 +10,8 @@
 //
 //******************************************************************************************************
 
+using BTNET.BVVM.Log;
+using System;
 using System.Windows;
 
 namespace BTNET.BVVM.MessageBox
@@ -20,6 +22,9 @@ namespace BTNET.BVVM.MessageBox
         {
             // Log Message
             WriteLog.Info(text);
+
+            // Console Logger
+            Console.WriteLine(text);
 
             // Display Message
             return System.Windows.MessageBox.Show(text, caption, messageButtons, messageIcon);

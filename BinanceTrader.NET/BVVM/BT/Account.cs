@@ -14,6 +14,7 @@ using BinanceAPI.Objects.Spot.IsolatedMarginData;
 using BinanceAPI.Objects.Spot.MarginData;
 using BinanceAPI.Objects.Spot.SpotData;
 using BTNET.BV.Enum;
+using BTNET.BVVM.Log;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;

@@ -19,7 +19,9 @@ namespace BTNET.BVVM
         private static BinanceClient local = new();
         private static BinanceSocketClient socketClient = new();
         private static BinanceSocketClient socketSymbolTicker = new();
+        private static BinanceSocketClient socketWatchlistTicker = new();
 
+        public static BinanceSocketClient SocketWatchlistTicker { get => socketWatchlistTicker; set => socketWatchlistTicker = value; }
         public static BinanceSocketClient SocketSymbolTicker { get => socketSymbolTicker; set => socketSymbolTicker = value; }
         public static BinanceSocketClient SocketClient { get => socketClient; set => socketClient = value; }
         public static BinanceClient Local { get => local; set => local = value; }
@@ -34,6 +36,11 @@ namespace BTNET.BVVM
             if (SocketSymbolTicker != null)
             {
                 _ = SocketSymbolTicker.UnsubscribeAllAsync();
+            }
+
+            if (SocketWatchlistTicker != null)
+            {
+                _ = SocketWatchlistTicker.UnsubscribeAllAsync();
             }
 
             if (Local != null)

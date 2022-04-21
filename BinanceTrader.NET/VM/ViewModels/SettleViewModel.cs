@@ -12,10 +12,11 @@
 
 using BTNET.BVVM;
 using BTNET.BVVM.BT;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class SettleViewModel : ObservableObject
     {
@@ -61,22 +62,22 @@ namespace BTNET.ViewModels
 
         private void SettleBase(object o)
         {
-            _ = Settle.SettleAsset(BorrowVM.FreeBase, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
+            _ = OrderTasks.SettleAsset(BorrowVM.FreeBase, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
         }
 
         private void SettleQuote(object o)
         {
-            _ = Settle.SettleAsset(BorrowVM.FreeQuote, BorrowVM.BorrowedQuote, Static.CurrentSymbolInfo.QuoteAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
+            _ = OrderTasks.SettleAsset(BorrowVM.FreeQuote, BorrowVM.BorrowedQuote, Static.CurrentSymbolInfo.QuoteAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
         }
 
         private void SettleAll(object o)
         {
-            var s = Settle.SettleAsset(BorrowVM.FreeBase, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
-            var s2 = Settle.SettleAsset(BorrowVM.FreeQuote, BorrowVM.BorrowedQuote, Static.CurrentSymbolInfo.QuoteAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
+            var s = OrderTasks.SettleAsset(BorrowVM.FreeBase, BorrowVM.BorrowedBase, Static.CurrentSymbolInfo.BaseAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
+            var s2 = OrderTasks.SettleAsset(BorrowVM.FreeQuote, BorrowVM.BorrowedQuote, Static.CurrentSymbolInfo.QuoteAsset, Static.CurrentSymbolInfo.Name, MainVM.IsIsolated && !MainVM.IsMargin);
 
             if (s.Result & s2.Result)
             {
-                MiniLog.AddLine("Settled Both Assets!");
+                WriteLog.Info("Settled Both Assets Sucessfully!");
             }
         }
 

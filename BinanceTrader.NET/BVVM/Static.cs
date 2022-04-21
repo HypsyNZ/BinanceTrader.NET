@@ -12,12 +12,12 @@
 
 using BinanceAPI.Objects.Spot.MarginData;
 using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.Base;
+using BinanceAPI.Sockets;
+using BTNET.Abstract;
+using BTNET.BV.Base;
 using BTNET.BV.Enum;
-using BTNET.BVVM.HELPERS;
 using BTNET.BVVM.MessageBox;
-using BTNET.ViewModels;
-using ExchangeAPI.Sockets;
+using BTNET.VM.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -44,7 +44,7 @@ namespace BTNET.BVVM
         public static TradingMode CurrentTradingMode = TradingMode.Error;
         public static SelectedTab CurrentlySelectedSymbolTab = SelectedTab.Error;
 
-        public static StoredExchangeInfo ManageExchangeInfo = new StoredExchangeInfo();
+        public static StoredExchangeInfo ManageExchangeInfo { get; set; } = new StoredExchangeInfo();
         public static StoredOrders ManageStoredOrders { get; set; } = new();
         public static RealTimeUpdateBase RTUB { get; set; } = new();
         public static BinanceMarginAccount MarginAccount { get; set; } = new();
@@ -54,7 +54,7 @@ namespace BTNET.BVVM
         public static QuoteBase Quote = new();
 
         public static ObservableCollection<BinanceSymbolViewModel> AllPrices { get; set; } = new();
-        public static ObservableCollection<BinanceSymbolViewModel> AllPricesFiltered { get; set; } = new();
+        public static ObservableCollection<BinanceSymbolViewModel> AllPricesUnfiltered { get; set; } = new();
 
         public static UpdateSubscription CurrentSymbolTickerUpdateSubscription = null;
 
@@ -68,18 +68,17 @@ namespace BTNET.BVVM
         public static bool IsStarted { get; set; } = false;
         public static bool IsListFocus { get; set; } = false;
         public static bool IsSearching { get; set; } = false;
-        public static bool WaitingForOrderUpdate { get; set; } = false;
-        public static bool BlockOrderUpdates { get; set; } = false;
         public static bool ShouldUpdateExchangeInfo { get; set; } = false;
 
-        public static volatile ObservableCollection<OrderBase> orders;
         public static volatile BinanceSymbolViewModel selectedSymbolViewModel;
         public static volatile BinanceSymbolViewModel lastSelectedSymbolViewModel;
+
+        public static bool symbolSelected = false;
 
         #region [ Read Only ]
 
         public static BinanceSymbolViewModel GetCurrentlySelectedSymbol => selectedSymbolViewModel;
-        public static ObservableCollection<OrderBase> GetOrders => orders;
+        public static bool GetIsSymbolSelected => symbolSelected;
 
         #endregion [ Read Only ]
     }

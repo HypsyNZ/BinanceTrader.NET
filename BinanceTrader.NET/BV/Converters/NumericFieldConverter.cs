@@ -14,7 +14,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace BTNET.Converters
+namespace BTNET.BV.Converters
 {
     public class NumericFieldConverter : IValueConverter
     {

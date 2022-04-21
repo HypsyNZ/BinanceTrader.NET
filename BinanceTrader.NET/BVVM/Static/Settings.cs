@@ -1,9 +1,10 @@
 ﻿using BinanceAPI;
+using BinanceAPI.Authentication;
 using BinanceAPI.Objects;
-using BTNET.Abstract;
-using ExchangeAPI.Authentication;
-using ExchangeAPI.Objects;
+using BTNET.BV.Abstract;
+using BTNET.BVVM.Log;
 using Newtonsoft.Json;
+using SimpleLog4.NET;
 using System;
 using System.IO;
 
@@ -13,15 +14,15 @@ namespace BTNET.BVVM
     {
         public static void LoadSettings()
         {
-            MiniLog.AddLine("Loading Settings");
+            WriteLog.Info("Loading Settings");
 
             BinanceSocketClientOptions binanceSocketClientOptions = new()
-            {
-#if DEBUG
-                LogLevel = LogLevel.Debug,
-#endif
+            {              
+                LogPath = Static.logSocket,
 #if RELEASE
                 LogLevel = LogLevel.Error,
+#else
+                LogLevel = LogLevel.Debug,
 #endif
             };
 
@@ -29,19 +30,19 @@ namespace BTNET.BVVM
 
             if (File.Exists(Static.settingsfile))
             {
-                string j = File.ReadAllText(Static.settingsfile);
+                string keysRaw = File.ReadAllText(Static.settingsfile);
 
-                if (j != null)
+                if (keysRaw != null || keysRaw != "")
                 {
-                    var j2 = JsonConvert.DeserializeObject<ApiKeys>(j);
+                    var keysDeserialized = JsonConvert.DeserializeObject<ApiKeys>(keysRaw);
 
-                    if (j2 != null)
+                    if (keysDeserialized != null)
                     {
-                        MainVM.ApiKey = j2.ApiKey;
-                        MainVM.ApiSecret = j2.ApiSecret;
+                        MainVM.ApiKey = keysDeserialized.ApiKey;
+                        MainVM.ApiSecret = keysDeserialized.ApiSecret;
                     }
 
-                    if (MainVM.ApiKey == null | MainVM.ApiSecret == null)
+                    if (MainVM.ApiKey == "" | MainVM.ApiSecret == "")
                     {
                         WriteLog.Error("API Keys Were Null");
                         return;
@@ -49,15 +50,18 @@ namespace BTNET.BVVM
 
                     BinanceClient.SetDefaultOptions(new BinanceClientOptions()
                     {
-                        ReceiveWindow = new TimeSpan(0, 0, 0, 0, 1000),
-                        AutoTimestamp = true,
+                        ReceiveWindow = TimeSpan.FromSeconds(1),
+                        LogPath = Static.logClient,
                         ApiCredentials = new ApiCredentials(MainVM.ApiKey, MainVM.ApiSecret),
-                        //       UserAgent = App.Product + " (" + App.Version + ")",
-#if DEBUG
-                        LogLevel = LogLevel.Debug,
-#endif
+
 #if RELEASE
+                        ServerTimeStartTime = 1000,
+                        ServerTimeUpdateTime = 125,
                         LogLevel = LogLevel.Error,
+#else
+                        ServerTimeStartTime = 1000,
+                        ServerTimeUpdateTime = 60000,
+                        LogLevel = LogLevel.Debug,
 #endif
                     });
                 }
@@ -65,15 +69,11 @@ namespace BTNET.BVVM
                 {
                     BinanceClient.SetDefaultOptions(new BinanceClientOptions()
                     {
-                        ReceiveWindow = new TimeSpan(0, 0, 0, 0, 1000),
-                        //   UserAgent = App.Product + " (" + App.Version + ")",
-#if DEBUG
-                        LogLevel = LogLevel.Debug,
-                        AutoTimestamp = true,
-#endif
-#if RELEASE
+                        ReceiveWindow = TimeSpan.FromSeconds(1),
+                        ServerTimeStartTime = 1000,
+                        ServerTimeUpdateTime = 300,
+                        LogPath = Static.logClient,
                         LogLevel = LogLevel.Error,
-#endif
                     });
                 }
             }

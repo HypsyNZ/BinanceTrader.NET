@@ -11,14 +11,15 @@
 //******************************************************************************************************-->
 
 <Window
-    x:Class="BTNET.Views.AlertsView"
+    x:Class="BTNET.VM.Views.AlertsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:BTNET.Controls"
-    xmlns:converters="clr-namespace:BTNET.Converters"
+    xmlns:controls="clr-namespace:BTNET.VM.Controls"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     Title="Alerts"
     Width="545"
+    MinWidth="545"
+    MinHeight="352"
     Height="352"
     Background="Black"
     Icon="/BV/Resources/bellicon.png"
@@ -29,8 +30,7 @@
 
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
-            <converters:WidthConverter x:Key="WidthConvert" />
-            <BitmapImage x:Key="Exit" UriSource="/BV/Resources/exit.jpg" />
+            <BitmapImage x:Key="Exit" UriSource="/BV/Resources/exit.png" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -74,7 +74,7 @@
                     HorizontalAlignment="Right"
                     Background="Transparent"
                     BorderThickness="0"
-                    Command="{Binding MainVM.CloseAlertsCommand}"
+                    Command="{Binding MainVM.ToggleAlertsCommand}"
                     Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                     ToolTip="Exit Panel">
                     <Image Source="{StaticResource Exit}" />

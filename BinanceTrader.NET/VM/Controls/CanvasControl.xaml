@@ -11,14 +11,13 @@
 //******************************************************************************************************-->
 
 <UserControl
-    x:Class="BTNET.Controls.CanvasControl"
+    x:Class="BTNET.VM.Controls.CanvasControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="clr-namespace:BTNET.Converters"
-    Name="CanvasC">
+    xmlns:converters="clr-namespace:BTNET.BV.Converters"
+    Name="CanvasC" SizeChanged="CanvasC_SizeChanged">
 
     <UserControl.Resources>
-        <converters:WidthConverter x:Key="WidthConvert" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <converters:NumericFieldConverter x:Key="converter" />
     </UserControl.Resources>
@@ -31,16 +30,17 @@
 
         <StackPanel
                 x:Name="MarginBox"
-                Canvas.Left="-60"
-                Canvas.Top="-170"
+                Canvas.Left="{Binding MainVM.ResetMarginInfoLeft, Mode=TwoWay}"
+                Canvas.Top="{Binding MainVM.ResetMarginInfoTop, Mode=TwoWay}"
                 Width="98"
                 MouseMove="MarginBox_MouseMove"
                 Orientation="Vertical"
-                PreviewMouseLeftButtonDown="MarginBox_PreviewMouseLeftButtonDown">
+                PreviewMouseLeftButtonDown="MarginBox_PreviewMouseLeftButtonDown" UseLayoutRounding="True">
 
             <GroupBox Visibility="{Binding MainVM.IsIsolated, Converter={StaticResource BoolToVis}}">
                 <GroupBox.Header>
                     <TextBlock
+                            FontSize="11"
                             Width="98"
                             Effect="{DynamicResource TextBlockShadow}"
                             Text="Isolated"
@@ -66,6 +66,7 @@
             <GroupBox Width="98" Visibility="{Binding MainVM.IsMargin, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolToVis}}">
                 <GroupBox.Header>
                     <TextBlock
+                            FontSize="11"
                             Effect="{DynamicResource TextBlockShadow}"
                             Text="Margin Info"
                             TextAlignment="Center" />
@@ -102,17 +103,19 @@
 
         <StackPanel
                 x:Name="BorrowBox"
-                Canvas.Left="-160"
-                Canvas.Top="-170"
+                Canvas.Left="{Binding MainVM.ResetBorrowBoxLeft, Mode=TwoWay}"
+                Canvas.Top="{Binding MainVM.ResetBorrowBoxTop, Mode=TwoWay}"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Bottom"
                 MouseMove="BorrowBox_MouseMove"
                 Orientation="Vertical"
-                PreviewMouseLeftButtonDown="BorrowBox_PreviewMouseLeftButtonDown">
+                PreviewMouseLeftButtonDown="BorrowBox_PreviewMouseLeftButtonDown"
+                UseLayoutRounding="True">
 
             <GroupBox Width="98" Visibility="{Binding BorrowVM.BorrowInfoVisible, Converter={StaticResource BoolToVis}}">
                 <GroupBox.Header>
                     <TextBlock
+                            FontSize="11"
                             Effect="{DynamicResource TextBlockShadow}"
                             Text="{Binding BorrowVM.BorrowInformationHeader, UpdateSourceTrigger=PropertyChanged}"
                             TextAlignment="Center" />
@@ -194,12 +197,10 @@
 
         <GroupBox
                 x:Name="RealTimeBox"
-                Canvas.Left="275"
-                Canvas.Top="-275"
+                Canvas.Left="{Binding MainVM.ResetRealTimeLeft, Mode=TwoWay}"
+                Canvas.Top="{Binding MainVM.ResetRealTimeTop, Mode=TwoWay}"
                 Width="90"
                 Height="90"
-                MinWidth="90"
-                MinHeight="90"
                 Padding="1,0"
                 BorderBrush="BlanchedAlmond"
                 BorderThickness="1"
@@ -210,7 +211,7 @@
 
             <GroupBox.Header>
                 <TextBlock
-                        FontSize="11"
+                        FontSize="10"
                         Foreground="White"
                         Text="{Binding BorrowVM.SymbolName}"
                         TextAlignment="Center" />
@@ -234,19 +235,17 @@
 
         <GroupBox
                 x:Name="BreakdownBox"
-                Canvas.Left="230"
-                Canvas.Top="-110"
+                Canvas.Left="215"
+                Canvas.Top="-85"
                 Width="100"
-                Height="60"
                 MinWidth="100"
-                MinHeight="55"
                 Padding="1,0"
                 MouseMove="BreakDownBoxMove"
                 PreviewMouseLeftButtonDown="BreakDownBoxDown"
                 UseLayoutRounding="True"
                 Visibility="{Binding BorrowVM.ShowBreakdown, Converter={StaticResource BoolToVis}}">
             <GroupBox.Header>
-                <TextBlock FontSize="16" Text="Breakdown" />
+                <TextBlock Text="Breakdown" FontSize="11" Effect="{DynamicResource TextBlockShadow}" />
             </GroupBox.Header>
 
             <StackPanel>

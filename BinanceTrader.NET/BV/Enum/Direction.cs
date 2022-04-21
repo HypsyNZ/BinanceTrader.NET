@@ -10,7 +10,7 @@
 //
 //******************************************************************************************************
 
-namespace BTNET.Base
+namespace BTNET.BV.Enum
 {
     public enum Direction : int
     {

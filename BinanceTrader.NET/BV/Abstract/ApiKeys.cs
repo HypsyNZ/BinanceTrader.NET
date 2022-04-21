@@ -10,7 +10,7 @@
 //
 //******************************************************************************************************
 
-namespace BTNET.Abstract
+namespace BTNET.BV.Abstract
 {
     public class ApiKeys
     {

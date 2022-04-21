@@ -13,7 +13,7 @@
 using System;
 using System.Windows.Input;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.BVVM.Helpers
 {
     public class DelegateCommand : ICommand
     {

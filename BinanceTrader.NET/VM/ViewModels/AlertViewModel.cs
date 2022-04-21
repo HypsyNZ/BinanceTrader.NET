@@ -10,15 +10,17 @@
 //
 //******************************************************************************************************
 
-using BTNET.Base;
+using BTNET.BV.Base;
+using BTNET.BV.Enum;
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class AlertViewModel : ObservableObject
     {
@@ -92,7 +94,6 @@ namespace BTNET.ViewModels
 
             _ = Task.Run(() =>
             {
-                MiniLog.AddLine("Added Alert..");
                 WriteLog.Alert("-----------------------------Added Alert-----------------------------");
                 WriteLog.Alert("Alert Price: " + AlertPrice + "| Alert Symbol: " + AlertSymbol + " | Repeat Interval:" + AlertInterval);
                 WriteLog.Alert("Repeat Alert: " + RepeatAlertBool + " | Play Sound: " + PlaySoundBool + " | Reverse First: " + ReverseFirstBool);
@@ -106,7 +107,7 @@ namespace BTNET.ViewModels
             Invoke.InvokeUI(() =>
             {
                 Alerts.Remove(SelectedAlert);
-                MiniLog.AddLine("Removed Alert..");
+                WriteLog.Info("Removed Alert for: " + SelectedAlert.AlertSymbol + " at " + AlertPrice);
             });
         }
 

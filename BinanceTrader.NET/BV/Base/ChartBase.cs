@@ -11,9 +11,9 @@
 //******************************************************************************************************
 
 using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.BVVM;
+using BTNET.BVVM.Log;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class ChartBase
     {

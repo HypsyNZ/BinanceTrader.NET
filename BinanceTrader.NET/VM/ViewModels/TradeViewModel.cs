@@ -11,10 +11,10 @@
 //******************************************************************************************************
 
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class TradeViewModel : ObservableObject
     {

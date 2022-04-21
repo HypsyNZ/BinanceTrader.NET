@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Reflection;
 
-namespace BTNET.Converters
+namespace BTNET.BV.Converters
 {
     public class TypeOnlyContractResolver<T> : DefaultContractResolver
     {

@@ -10,21 +10,21 @@
 //
 //******************************************************************************************************
 
-using BTNET.Base;
-using BTNET.ViewModels;
+using BTNET.BV.Enum;
+using BTNET.BVVM;
 using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BTNET.Views
+namespace BTNET.VM.Views
 {
     /// <summary>
     /// Interaction logic for AlertsView.xaml
     /// </summary>
     public partial class AlertsView : Window
     {
-        public AlertsView(Main datacontext)
+        public AlertsView(MainContext datacontext)
         {
             InitializeComponent();
 

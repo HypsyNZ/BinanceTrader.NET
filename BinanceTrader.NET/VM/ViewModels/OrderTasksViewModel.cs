@@ -11,51 +11,66 @@
 //******************************************************************************************************
 
 using BinanceAPI.Enums;
-using BTNET.Base;
+using BTNET.BV.Base;
 using BTNET.BVVM;
 using BTNET.BVVM.BT;
-using BTNET.BVVM.HELPERS;
+using BTNET.BVVM.Helpers;
 using System.Windows.Input;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
-    public class SettleWidgetViewModel : ObservableObject
+    public class OrderTasksViewModel : ObservableObject
     {
+        public ICommand BuyCommand { get; set; }
         public ICommand BuyAndSettleCommand { get; set; }
         public ICommand BuyBorrowAndSettleCommand { get; set; }
 
+        public ICommand SellCommand { get; set; }
         public ICommand SellAndSettleCommand { get; set; }
         public ICommand SellBorrowAndSettleCommand { get; set; }
 
         public void InitializeCommands()
         {
+            BuyCommand = new DelegateCommand(Buy);
             BuyAndSettleCommand = new DelegateCommand(BuyAndSettle);
             BuyBorrowAndSettleCommand = new DelegateCommand(BuyBorrowAndSettle);
+
+            SellCommand = new DelegateCommand(Sell);
             SellAndSettleCommand = new DelegateCommand(SellAndSettle);
             SellBorrowAndSettleCommand = new DelegateCommand(SellBorrowAndSettle);
         }
 
+        private void Buy(object o)
+        {
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Buy, false, false);
+        }
+
         private void BuyAndSettle(object o)
         {
-            Settle.ProcessOrder((OrderBase)o, OrderSide.Buy, false);
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Buy, false);
         }
 
         private void BuyBorrowAndSettle(object o)
         {
-            Settle.ProcessOrder((OrderBase)o, OrderSide.Buy, true);
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Buy, true);
+        }
+
+        private void Sell(object o)
+        {
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Sell, false, false);
         }
 
         private void SellAndSettle(object o)
         {
-            Settle.ProcessOrder((OrderBase)o, OrderSide.Sell, false);
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Sell, false);
         }
 
         private void SellBorrowAndSettle(object o)
         {
-            Settle.ProcessOrder((OrderBase)o, OrderSide.Sell, true);
+            OrderTasks.ProcessOrder((OrderBase)o, OrderSide.Sell, true);
         }
 
-        public SettleWidgetViewModel()
+        public OrderTasksViewModel()
         {
         }
     }

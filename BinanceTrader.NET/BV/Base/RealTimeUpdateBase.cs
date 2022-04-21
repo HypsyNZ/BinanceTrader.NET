@@ -12,7 +12,7 @@
 
 using BTNET.BVVM;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class RealTimeUpdateBase : ObservableObject
     {

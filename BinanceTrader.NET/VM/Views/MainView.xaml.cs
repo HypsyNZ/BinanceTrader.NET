@@ -10,13 +10,11 @@
 //
 //******************************************************************************************************
 
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security;
+using BTNET.BVVM;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace BTNET.Views
+namespace BTNET.VM.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -25,28 +23,8 @@ namespace BTNET.Views
     {
         public MainView()
         {
-#if RELEASE
-            Process[] processes = Process.GetProcessesByName("BinanceTrader.NET");
-            if (processes.Length > 1) { System.Environment.Exit(4); }
-#endif
-
-            _ = WinApi.TimeBeginPeriod(1);
             InitializeComponent();
             //this.Topmost = true;
-        }
-
-        // Punish bad apps by setting a global
-        public static class WinApi
-        {
-            /// <summary>TimeBeginPeriod(). See the Windows API documentation for details.</summary>
-            [SuppressUnmanagedCodeSecurity]
-            [DllImport("winmm.dll", EntryPoint = "timeBeginPeriod", SetLastError = true)]
-            public static extern uint TimeBeginPeriod(uint uMilliseconds);
-
-            /// <summary>TimeEndPeriod(). See the Windows API documentation for details.</summary>
-            [SuppressUnmanagedCodeSecurity]
-            [DllImport("winmm.dll", EntryPoint = "timeEndPeriod", SetLastError = true)]
-            public static extern uint TimeEndPeriod(uint uMilliseconds);
         }
 
         private void SortableListViewColumnHeaderClicked(object sender, RoutedEventArgs e)
@@ -59,6 +37,8 @@ namespace BTNET.Views
             if (e.ClickCount == 2)
             {
                 WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+                _ = MainContext.ResetControlPositions();
+                _ = MainContext.PaddingWidth();
             }
 
             DragMove();
@@ -67,11 +47,6 @@ namespace BTNET.Views
         private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             BorderThickness = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
-        }
-
-        private void Minilog_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            this.Minilog.ScrollToEnd();
         }
     }
 }

@@ -14,7 +14,7 @@ using BinanceAPI.Objects.Spot.MarketData;
 using BinanceAPI.Objects.Spot.WalletData;
 using BTNET.BVVM;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class BinanceSymbolViewModel : ObservableObject
     {

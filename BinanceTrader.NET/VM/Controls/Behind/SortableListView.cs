@@ -14,7 +14,7 @@ using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace BTNET.Controls
+namespace BTNET.VM.Controls
 {
     public class SortableListView : ListView
     {

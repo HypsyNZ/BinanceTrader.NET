@@ -11,9 +11,10 @@
 //******************************************************************************************************
 
 using BinanceAPI.Enums;
+using BinanceAPI.Objects;
 using BTNET.BV.Enum;
-using BTNET.ViewModels;
-using ExchangeAPI.Objects;
+using BTNET.BVVM.Log;
+using BTNET.VM.ViewModels;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -25,7 +26,7 @@ namespace BTNET.BVVM.BT
         {
             if (Static.CurrentlySelectedSymbolTab != SelectedTab.Buy)
             {
-                MiniLog.AddLine("Fatal Error!!");
+                WriteLog.Error("Fatal Error in UI");
                 _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -37,7 +38,7 @@ namespace BTNET.BVVM.BT
         {
             if (Static.CurrentlySelectedSymbolTab != SelectedTab.Sell)
             {
-                MiniLog.AddLine("Fatal Error!!");
+                WriteLog.Error("Fatal Error in UI");
                 _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -70,7 +71,6 @@ namespace BTNET.BVVM.BT
 
             if (quantity == 0 || price == 0)
             {
-                MiniLog.AddLine("Fatal Error!!");
                 _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return Task.CompletedTask;
             }
@@ -85,13 +85,13 @@ namespace BTNET.BVVM.BT
 
                 result = tradingmode switch
                 {
-                    TradingMode.Spot => BTClient.Local.Spot.Order.PlaceOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 1000, timeInForce: tif),
+                    TradingMode.Spot => BTClient.Local.Spot.Order.PlaceOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 3000, timeInForce: tif),
                     TradingMode.Margin => !borrow
-                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 1000, timeInForce: tif)
-                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 1000, timeInForce: tif),
+                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 3000, timeInForce: tif)
+                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 3000, timeInForce: tif),
                     TradingMode.Isolated => !borrow
-                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, receiveWindow: 1000, timeInForce: tif)
-                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 1000, timeInForce: tif),
+                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, receiveWindow: 3000, timeInForce: tif)
+                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 3000, timeInForce: tif),
                     _ => null,
                 };
 
@@ -99,11 +99,14 @@ namespace BTNET.BVVM.BT
 
                 if (result.Result.Success)
                 {
-                    MiniLog.AddLine("Order Placed!");
+                    WriteLog.Info("Order Placed!: Symbol :" + symbol +
+                        " | OrderQuantity :" + quantity +
+                        " | SymbolPrice :" + price +
+                        " | Type: " + type +
+                        " | Side: " + side);
                 }
                 else
                 {
-                    MiniLog.AddLine("Order Failed!");
                     _ = Static.MessageBox.ShowMessage($"Order placing failed: {result.Result.Error.Message}", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }).ConfigureAwait(false);

@@ -11,11 +11,12 @@
 //******************************************************************************************************
 
 using BinanceAPI;
+using BinanceAPI.Sockets;
 using BTNET.BVVM;
-using ExchangeAPI.Sockets;
+using BTNET.BVVM.Log;
 using System;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class WatchlistItem : ObservableObject
     {

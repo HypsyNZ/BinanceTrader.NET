@@ -14,7 +14,7 @@ using System;
 using System.Windows;
 using System.Windows.Media.Animation;
 
-namespace BTNET.Converters
+namespace BTNET.BV.Converters
 {
     public class GridLengthAnimation : AnimationTimeline
     {

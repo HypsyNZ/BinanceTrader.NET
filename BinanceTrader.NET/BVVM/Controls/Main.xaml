@@ -1,0 +1,18 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/BV/Controls/Colors.xaml" />
+
+        <ResourceDictionary Source="/BV/Controls/GridViewColumnHeaderGripper.xaml" />
+        <ResourceDictionary Source="/BV/Controls/GridViewScrollViewerStyleKey.xaml" />
+        <ResourceDictionary Source="/BV/Controls/GridViewColumnHeader.xaml" />
+
+        <ResourceDictionary Source="/BV/Controls/GroupBox.xaml" />
+
+        <ResourceDictionary Source="/BV/Controls/ListView.xaml" />
+        <ResourceDictionary Source="/BV/Controls/ListViewItem.xaml" />
+
+        <ResourceDictionary Source="/BV/Controls/RealTimeBoxStyle.xaml" />
+
+        <ResourceDictionary Source="/BV/Controls/TabItem.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

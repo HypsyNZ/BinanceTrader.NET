@@ -12,7 +12,7 @@
 
 using BTNET.BVVM;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class RealTimeUpdateViewModel : ObservableObject
     {

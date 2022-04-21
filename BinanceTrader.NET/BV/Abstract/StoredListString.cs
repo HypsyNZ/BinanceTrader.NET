@@ -12,7 +12,7 @@
 
 using System.Collections.Generic;
 
-namespace BTNET.Abstract
+namespace BTNET.BV.Abstract
 {
     public class StoredListString
     {
@@ -20,6 +20,11 @@ namespace BTNET.Abstract
         {
             get;
             set;
+        }
+
+        public StoredListString(List<string> list)
+        {
+            List = list;
         }
     }
 }

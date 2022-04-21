@@ -13,13 +13,26 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace BTNET.Controls
+namespace BTNET.VM.Controls
 {
     /// <summary>
     /// Interaction logic for CanvasControl.xaml
     /// </summary>
     public partial class CanvasControl : UserControl
     {
+        public static double RealTimeLeft { get; set; } = 0;
+        public static double RealTimeTop { get; set; } = 0;
+
+        public static double BorrowBoxLeft { get; set; } = 0;
+        public static double BorrowBoxTop { get; set; } = 0;
+
+        public static double MarginBoxLeft { get; set; } = 0;
+        public static double MarginBoxTop { get; set; } = 0;
+
+        public static double CanvasActualWidth { get; set; } = 0;
+
+        public static double CanvasActualHeight { get; set; } = 0;
+
         public CanvasControl()
         {
             InitializeComponent();
@@ -32,27 +45,6 @@ namespace BTNET.Controls
         private void StopMoving(object sender, MouseButtonEventArgs e)
         {
             movingObject = null;
-        }
-
-        private void RealTimeBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            firstXPos = e.GetPosition(RealTimeBox).X;
-            firstYPos = e.GetPosition(RealTimeBox).Y;
-            movingObject = sender;
-        }
-
-        private void RealTimeBox_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed && sender == movingObject)
-            {
-                double newLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
-
-                RealTimeBox.SetValue(Canvas.LeftProperty, newLeft);
-
-                double newTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
-
-                RealTimeBox.SetValue(Canvas.TopProperty, newTop);
-            }
         }
 
         private void BreakDownBoxDown(object sender, MouseButtonEventArgs e)
@@ -77,6 +69,26 @@ namespace BTNET.Controls
             }
         }
 
+        private void RealTimeBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            firstXPos = e.GetPosition(RealTimeBox).X;
+            firstYPos = e.GetPosition(RealTimeBox).Y;
+
+            movingObject = sender;
+        }
+
+        private void RealTimeBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && sender == movingObject)
+            {
+                RealTimeLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
+                RealTimeTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
+
+                RealTimeBox.SetValue(Canvas.LeftProperty, RealTimeLeft);
+                RealTimeBox.SetValue(Canvas.TopProperty, RealTimeTop);
+            }
+        }
+
         private void BorrowBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             firstXPos = e.GetPosition(BorrowBox).X;
@@ -85,17 +97,15 @@ namespace BTNET.Controls
             movingObject = sender;
         }
 
-        private void MarginBox_MouseMove(object sender, MouseEventArgs e)
+        private void BorrowBox_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed && sender == movingObject)
             {
-                double newLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
+                BorrowBoxLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
+                BorrowBoxTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
 
-                MarginBox.SetValue(Canvas.LeftProperty, newLeft);
-
-                double newTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
-
-                MarginBox.SetValue(Canvas.TopProperty, newTop);
+                BorrowBox.SetValue(Canvas.LeftProperty, BorrowBoxLeft);
+                BorrowBox.SetValue(Canvas.TopProperty, BorrowBoxTop);
             }
         }
 
@@ -107,18 +117,22 @@ namespace BTNET.Controls
             movingObject = sender;
         }
 
-        private void BorrowBox_MouseMove(object sender, MouseEventArgs e)
+        private void MarginBox_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed && sender == movingObject)
             {
-                double newLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
+                MarginBoxLeft = e.GetPosition(canvas).X - firstXPos - canvas.Margin.Left;
+                MarginBoxTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
 
-                BorrowBox.SetValue(Canvas.LeftProperty, newLeft);
-
-                double newTop = e.GetPosition(canvas).Y - firstYPos - canvas.Margin.Top;
-
-                BorrowBox.SetValue(Canvas.TopProperty, newTop);
+                MarginBox.SetValue(Canvas.LeftProperty, MarginBoxLeft);
+                MarginBox.SetValue(Canvas.TopProperty, MarginBoxTop);
             }
+        }
+
+        private void CanvasC_SizeChanged(object sender, System.Windows.SizeChangedEventArgs e)
+        {
+            CanvasActualWidth = CanvasC.ActualWidth;
+            CanvasActualHeight = CanvasC.ActualHeight;
         }
     }
 }

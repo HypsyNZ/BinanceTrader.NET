@@ -12,12 +12,13 @@
 
 using BinanceAPI.Objects.Spot.MarketData;
 using BTNET.BVVM;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
 using Newtonsoft.Json;
 using System;
 using System.IO;
-using static BTNET.BVVM.Stored;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class StoredExchangeInfo : ObservableObject
     {
@@ -27,11 +28,11 @@ namespace BTNET.Base
         {
             Directory.CreateDirectory("c:\\BNET\\Settings\\");
 
-            ExchangeInfo = LoadStoredExchangeInfo(storedExchangeInfo);
+            var ExchangeInfo = LoadStoredExchangeInfo(Stored.storedExchangeInfo);
 
             if (ExchangeInfo != null)
             {
-                MiniLog.AddLine("Loaded Exchange Informaiton");
+                WriteLog.Info("Loaded Exchange Informaiton from File");
                 return ExchangeInfo;
             }
 
@@ -40,45 +41,77 @@ namespace BTNET.Base
 
         private BinanceExchangeInfo LoadStoredExchangeInfo(string storedExchangeInfoString)
         {
-            if (File.Exists(storedExchangeInfoString))
+            try
             {
-                try
+                if (File.Exists(storedExchangeInfoString))
                 {
                     string _storedExchangeInfo = File.ReadAllText(storedExchangeInfoString);
                     if (_storedExchangeInfo != null)
                     {
-                        var _dstoredExchangeInfo = JsonConvert.DeserializeObject<BinanceExchangeInfo>(_storedExchangeInfo);
+                        try
+                        {
+                            var _dstoredExchangeInfo = JsonConvert.DeserializeObject<BinanceExchangeInfo>(_storedExchangeInfo);
 
-                        if (_dstoredExchangeInfo != null)
-                        {
-                            return _dstoredExchangeInfo;
+                            if (_dstoredExchangeInfo != null)
+                            {
+                                return _dstoredExchangeInfo;
+                            }
+                            else
+                            {
+                                return null;
+                            }
                         }
-                        else
+                        catch (JsonSerializationException)
                         {
-                            WriteLog.Error("ExchangeInfo: Exchange Information couldn't be deserialized");
+                            WriteLog.Error("Stored ExchangeInfo failed to deserialize and was deleted, This is usually caused by incorrect closing of BinanceTrader");
+                            File.Delete(storedExchangeInfoString);
+
+                            if (!ExchangeInfoRestoreAttempted)
+                            {
+                                ExchangeInfoRestoreAttempted = Backup.RestoreBackup(storedExchangeInfoString, "ExchangeInfo");
+
+                                return LoadStoredExchangeInfo(storedExchangeInfoString);
+                            }
+                            else
+                            {
+                                File.Delete(storedExchangeInfoString + ".bak");
+                                WriteLog.Error("Exchange Info Backup was damaged and was deleted");
+                            }
+
                             return null;
                         }
                     }
                     else
                     {
-                        WriteLog.Error("ExchangeInfo: Exchange Information couldn't be read or doesn't exist");
+                        WriteLog.Info("ExchangeInfo: Exchange Information couldn't be read or doesn't exist");
                         return null;
                     }
                 }
-                catch (System.Security.SecurityException)
+                else
                 {
-                    _ = Static.MessageBox.ShowMessage($"Why did you do this", "Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return null;
-                }
-                catch (Exception ex)
-                {
-                    WriteLog.Error("Stored Exchange Info: ", ex);
+                    if (!ExchangeInfoRestoreAttempted)
+                    {
+                        ExchangeInfoRestoreAttempted = Backup.RestoreBackup(storedExchangeInfoString, "ExchangeInfo");
+
+                        return LoadStoredExchangeInfo(storedExchangeInfoString);
+                    }
+
                     return null;
                 }
             }
-
-            return null;
+            catch (System.Security.SecurityException)
+            {
+                _ = Static.MessageBox.ShowMessage($"Why did you do this", "Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WriteLog.Error("Stored Exchange Info: ", ex);
+                return null;
+            }
         }
+
+        private static bool ExchangeInfoRestoreAttempted { get; set; } = false;
 
         #endregion [ Load ]
 
@@ -86,9 +119,9 @@ namespace BTNET.Base
 
         public BinanceExchangeInfo GetStoredExchangeInfo()
         {
-            if (ExchangeInfo != null)
+            if (Stored.ExchangeInfo != null)
             {
-                return ExchangeInfo;
+                return Stored.ExchangeInfo;
             }
 
             return null;
@@ -102,9 +135,9 @@ namespace BTNET.Base
         {
             if (exchangeInfo == null) { return; }
 
-            ExchangeInfo = exchangeInfo;
+            Stored.ExchangeInfo = exchangeInfo;
 
-            StoreExchangeInfo(ExchangeInfo, storedExchangeInfo);
+            StoreExchangeInfo(Stored.ExchangeInfo, Stored.storedExchangeInfo);
         }
 
         #endregion [ Set ]
@@ -113,15 +146,35 @@ namespace BTNET.Base
 
         private bool StoreExchangeInfo(BinanceExchangeInfo exchangeInfoToStore, string exchangeInfoToStoreFile)
         {
-            if (ExchangeInfo != null)
+            try
             {
-                var convert = JsonConvert.SerializeObject(ExchangeInfo, Formatting.Indented, new JsonSerializerSettings());
-                File.WriteAllText(storedExchangeInfo, convert);
+                if (exchangeInfoToStore != null)
+                {
+                    var convert = JsonConvert.SerializeObject(exchangeInfoToStore, Formatting.Indented, new JsonSerializerSettings());
 
-                return true;
+                    File.WriteAllText(exchangeInfoToStoreFile, convert);
+
+                    var backup = exchangeInfoToStoreFile + ".bak";
+
+                    if (File.Exists(exchangeInfoToStoreFile))
+                    {
+                        var ExchangeInfo = LoadStoredExchangeInfo(Stored.storedExchangeInfo);
+                        if (ExchangeInfo != null)
+                        {
+                            Backup.SaveBackup(exchangeInfoToStoreFile);
+                        }
+                    }
+
+                    return true;
+                }
+
+                return false;
             }
-
-            return false;
+            catch (Exception ex)
+            {
+                WriteLog.Error("Error while Storing Exchange Information", ex);
+                return false;
+            }
         }
 
         #endregion [ Save ]

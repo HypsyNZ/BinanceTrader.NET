@@ -10,10 +10,12 @@
 //
 //******************************************************************************************************
 
-using BTNET.Base;
+using BTNET.BV.Converters;
 using BTNET.BV.Enum;
 using BTNET.BVVM;
-using BTNET.Converters;
+using BTNET.BVVM.Helpers;
+using BTNET.BVVM.Log;
+using BTNET.VM.ViewModels;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,7 +24,7 @@ using System.IO;
 using System.Linq;
 using static BTNET.BVVM.Stored;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class StoredOrders : ObservableObject
     {
@@ -41,7 +43,7 @@ namespace BTNET.Base
 
             if (ToS.Count > 0 || ToM.Count > 0 || ToI.Count > 0)
             {
-                MiniLog.AddLine("Loaded Stored Orders..");
+                WriteLog.Info("Loaded Stored Orders from File");
             }
         }
 
@@ -54,22 +56,29 @@ namespace BTNET.Base
                     string _storedOrders = File.ReadAllText(storedOrdersString);
                     if (_storedOrders != null)
                     {
-                        var _dstoredOrders = JsonConvert.DeserializeObject<ObservableCollection<OrderBase>>(_storedOrders);
+                        try
+                        {
+                            var _dstoredOrders = JsonConvert.DeserializeObject<ObservableCollection<OrderBase>>(_storedOrders);
 
-                        if (_dstoredOrders != null)
-                        {
-                            return _dstoredOrders;
+                            if (_dstoredOrders != null)
+                            {
+                                return _dstoredOrders;
+                            }
+                            else
+                            {
+                                WriteLog.Error("StoredOrders: TempOrders was Null");
+                                return new();
+                            }
                         }
-                        else
+                        catch (JsonSerializationException)
                         {
-                            WriteLog.Error("StoredOrders: TempOrders was Null");
-                            return new();
+                            WriteLog.Error("A set of Stored Orders failed to deserialize and was deleted, This is usually caused by incorrect closing of BinanceTrader");
+                            File.Delete(storedOrdersString);
                         }
                     }
                     else
                     {
-                        MiniLog.AddLine("No Stored Orders");
-                        WriteLog.Info("No stored Orders");
+                        WriteLog.Info("No Stored Orders");
                         return new();
                     }
                 }
@@ -90,12 +99,9 @@ namespace BTNET.Base
 
         public ObservableCollection<OrderBase> LoadStoredOrdersCurrentSymbol(ObservableCollection<OrderBase> orders)
         {
-            if (IsLoadingStoredOrders)
+            if ((TempOrders != null) && (TempOrders.Count > 0))
             {
-                if ((TempOrders != null) && (TempOrders.Count > 0))
-                {
-                    return TempOrders;
-                }
+                return TempOrders;
             }
 
             return orders != null ? orders : new();
@@ -118,6 +124,11 @@ namespace BTNET.Base
 
                 if (TempOrders != null && TempOrders.Count > 0)
                 {
+                    foreach (var order in TempOrders)
+                    {
+                        order.Helper = new OrderViewModel(order.Side, order.Status);
+                    }
+
                     IsLoadingStoredOrders = true;
                     WriteLog.Info("Loaded [" + storedOrders.Count(s => s.Symbol == Static.GetCurrentlySelectedSymbol.SymbolView.Symbol) + "] Orders from file");
 
@@ -159,7 +170,6 @@ namespace BTNET.Base
                 default:
                     // Error
                     WriteLog.Error("StoredOrders: Mode wasn't selected during symbol change");
-                    MiniLog.AddLine("Stored Orders Wont Load");
                     break;
             }
         }
@@ -168,39 +178,37 @@ namespace BTNET.Base
 
         #region [ Add ]
 
-        public bool UpdateStoredOrdersAndRefresh(ObservableCollection<OrderBase> OrderUpdate)
+        public bool AddOrderUpdateToCollections(ObservableCollection<OrderBase> OrderUpdate)
         {
-            if (IsUpdatingStoredOrders || IsLoadingStoredOrders)
+            if (OrderUpdate != null)
             {
                 AddCurrentOrdersToCollections(OrderUpdate);
-                IsUpdatingStoredOrders = false;
-                IsLoadingStoredOrders = false;
-
                 return true;
             }
+
             return false;
         }
 
-        public void AddCurrentOrdersToCollections(ObservableCollection<OrderBase> orders)
+        public void AddCurrentOrdersToCollections(ObservableCollection<OrderBase> OrderUpdate)
         {
             switch (Static.CurrentTradingMode)
             {
                 // Spot Orders
                 case TradingMode.Spot:
                     {
-                        ToS = AddCurrent(ToS, orders);
+                        ToS = AddCurrent(ToS, OrderUpdate);
                         break;
                     }
                 // Margin Orders
                 case TradingMode.Margin:
                     {
-                        ToM = AddCurrent(ToM, orders);
+                        ToM = AddCurrent(ToM, OrderUpdate);
                         break;
                     }
                 // Isolated Orders
                 case TradingMode.Isolated:
                     {
-                        ToI = AddCurrent(ToI, orders);
+                        ToI = AddCurrent(ToI, OrderUpdate);
                         break;
                     }
                 default:
@@ -268,9 +276,9 @@ namespace BTNET.Base
                     o.Price = order.Price;
                     o.QuantityFilled = order.QuantityFilled;
                     o.Quantity = order.Quantity;
-                    o.Status = order.Status;
                     o.TimeInForce = order.TimeInForce;
-
+                    o.Side = order.Side;
+                    o.Status = order.Status;
                     o.MinPos = order.MinPos;
                     o.OrderFee = order.OrderFee;
                     o.Fee = order.Fee;
@@ -280,6 +288,8 @@ namespace BTNET.Base
                     o.ITDQ = order.ITDQ;
                     o.IPH = order.IPH;
                     o.IPD = order.IPD;
+
+                    o.ResetTime = order.ResetTime;
                 }
             }
         }
@@ -300,6 +310,18 @@ namespace BTNET.Base
                 var convert = JsonConvert.SerializeObject(OrdersToStore, Formatting.Indented, jsonSettings);
 
                 File.WriteAllText(OrdersToStoreFile, convert);
+
+                var backup = OrdersToStoreFile + ".bak";
+
+                if (File.Exists(OrdersToStoreFile))
+                {
+                    var StoredOrdersBackup = LoadStoredOrders(OrdersToStoreFile);
+                    if (StoredOrdersBackup != default)
+                    {
+                        Backup.SaveBackup(OrdersToStoreFile);
+                    }
+                }
+
                 return true;
             }
 

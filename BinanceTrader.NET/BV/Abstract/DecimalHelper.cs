@@ -12,7 +12,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.Abstract
 {
     [StructLayout(LayoutKind.Explicit)]
     public struct DecimalHelper

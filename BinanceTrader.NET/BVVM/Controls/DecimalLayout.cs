@@ -11,13 +11,13 @@
 //******************************************************************************************************
 
 using BinanceAPI.Objects.Spot.MarketData;
-using System;
+using BTNET.Abstract;
 using System.Globalization;
 using System.Linq;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.BVVM.Controls
 {
-    internal static class ConvertBySats
+    internal static class DecimalLayout
     {
         /// <summary>
         /// Convert Decimal to its Appropriate Representation using <see cref="BinanceSymbol"/> directly
@@ -25,9 +25,9 @@ namespace BTNET.BVVM.HELPERS
         /// <param name="d">Decimal to Convert</param>
         /// <param name="binanceSymbol">Binance Symbol Info Object</param>
         /// <returns></returns>
-        public static decimal ConvertDecimal(decimal d, BinanceSymbol binanceSymbol)
+        public static decimal Convert(decimal d, BinanceSymbol binanceSymbol)
         {
-            DecimalHelper dd = Helpers.TrimDecimal(binanceSymbol.PriceFilter.MinPrice);
+            DecimalHelper dd = TrimDecimal(binanceSymbol != null ? binanceSymbol.PriceFilter.MinPrice : 0);
             return CSats(d, dd);
         }
 
@@ -38,10 +38,10 @@ namespace BTNET.BVVM.HELPERS
         /// <param name="symbol">Current Symbol</param>
         /// <param name="BinanceExchangeInfo">Binance Exchange Info</param>
         /// <returns></returns>
-        public static decimal ConvertDecimal(decimal d, string symbol, BinanceExchangeInfo BinanceExchangeInfo)
+        public static decimal Convert(decimal d, string symbol, BinanceExchangeInfo BinanceExchangeInfo)
         {
             var res = BinanceExchangeInfo.Symbols.SingleOrDefault(r => r.Name == symbol);
-            DecimalHelper dd = Helpers.TrimDecimal(res.PriceFilter.MinPrice);
+            DecimalHelper dd = TrimDecimal(res != null ? res.PriceFilter.MinPrice : 0);
             return CSats(d, dd);
         }
 
@@ -51,9 +51,9 @@ namespace BTNET.BVVM.HELPERS
         /// <param name="d">Decimal to Convert</param>
         /// <param name="dd"><see cref="DecimalHelper"/> Object</param>
         /// <returns>Appropriate Representation</returns>
-        public static decimal CSats(decimal d, DecimalHelper dd)
+        private static decimal CSats(decimal d, DecimalHelper dd)
         {
-            double val = Convert.ToDouble(d);
+            double val = System.Convert.ToDouble(d);
             var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
             nfi.NumberGroupSeparator = ",";
             string finalString;
@@ -87,6 +87,24 @@ namespace BTNET.BVVM.HELPERS
 
             bool f = decimal.TryParse(finalString, out decimal outD);
             return f ? outD : 0;
+        }
+
+        /// <summary>
+        /// Trim the zeros from the end of a <seealso cref="decimal"/>
+        /// </summary>
+        /// <param name="value"><seealso cref="decimal"/> to trim</param>
+        /// <returns></returns>
+        public static decimal TrimDecimal(decimal value)
+        {
+            if (value != 0)
+            {
+                string text = value.ToString(CultureInfo.InvariantCulture).TrimEnd('0');
+
+                bool convertback = decimal.TryParse(text, out decimal outD);
+
+                return convertback ? outD : 0;
+            }
+            return 0;
         }
     }
 }

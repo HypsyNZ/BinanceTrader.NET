@@ -10,11 +10,12 @@
 //
 //******************************************************************************************************
 
-using BTNET.Abstract;
-using BTNET.Base;
-using BTNET.ViewModels;
-using ExchangeAPI.Sockets;
+using BTNET.BV.Abstract;
+using BTNET.BV.Base;
+using BTNET.VM.ViewModels;
+using System;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using TimerSink;
 
@@ -33,13 +34,15 @@ namespace BTNET.BVVM
 
         #endregion [PropertyChangedEvent]
 
-        public TimingSink Sink = new();
-        public TimingSink SinkRT = new();
+        public static string Product { get; } = ((AssemblyProductAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyProductAttribute), false)).Product;
+        public static string Version { get; } = ((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute), false)).Version;
+
+        public static BVVM.BT.Timing Timers;
+        public TimingSink Sink;
 
         public string symbolSearchValue;
         private decimal minTickSize, incrementLotSizeMin;
         private bool searchEnabled = false;
-        private bool symbolSelected = false;
 
         public readonly ApiKeys UserApiKeys = new();
 
@@ -53,7 +56,7 @@ namespace BTNET.BVVM
         { get => this.searchEnabled; set { this.searchEnabled = value; PC(); } }
 
         public bool IsSymbolSelected
-        { get => this.symbolSelected; set { this.symbolSelected = value; PC(); } }
+        { get => Static.symbolSelected; set { Static.symbolSelected = value; PC(); } }
 
         #region [ Static ]
 
@@ -67,6 +70,10 @@ namespace BTNET.BVVM
         public static RealTimeUpdateViewModel RealTimeVM { get; set; } = new();
         public static SettleViewModel SettleVM { get; set; } = new();
         public static AlertViewModel AlertVM { get; set; } = new();
+        public static NotepadViewModel NotepadVM { get; set; } = new();
+        public static VisibilityViewModel VisibilityVM { get; set; } = new();
+
+        public static MainOrders Orders { get; set; } = new();
 
         #endregion [ Static ]
     }
