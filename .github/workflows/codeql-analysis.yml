@@ -37,11 +37,6 @@ jobs:
       env:
         Configuration: Debug
         RuntimeIdentifier: win-x64
-    # CodeQL
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: ${{ matrix.language }}
     # Build and create MSIX package
     - name: Build the WPF project in MSIX package mode
       run: msbuild ${{ env.Solution_Path }} /p:Platform=$env:TargetPlatform /p:RuntimeIdentifier=$env:RuntimeIdentifier /p:Configuration=$env:Configuration /p:AppxBundlePlatforms=$env:Appx_Bundle_Platforms /p:UapAppxPackageBuildMode=$env:BuildMode /p:AppxBundle=$env:AppxBundle /p:AppxPackageDir="$env:AppxPackageDir" /p:GenerateAppxPackageOnBuild=$env:GenerateAppPackage /p:AppxPackageSigningEnabled=$env:SigningEnabled /p:PackageCertificateKeyFile=${{ env.Signing_Certificate }} /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
@@ -49,12 +44,9 @@ jobs:
         AppxBundle: Never
         BuildMode: SideloadOnly
         AppxPackageDir: ${{ env.GITHUB_ACTION_PATH }}\${{ env.App_Packages_Directory }}
-        Configuration: Debug
+        Configuration: Release
         TargetPlatform: x64
         RuntimeIdentifier: win-x64
         AppxBundlePlatforms: x86|x64|arm|arm64
         SigningEnabled: false
         GenerateAppPackage: false
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
