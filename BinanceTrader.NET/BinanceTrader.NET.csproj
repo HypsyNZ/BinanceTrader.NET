@@ -21,8 +21,8 @@
     <AssemblyName>BinanceTrader.NET</AssemblyName>
     <Description>High Precision Trading App For Binance</Description>
     <Copyright>Copyright © 2022, S Christison</Copyright>
-    <AssemblyVersion>1.4.1</AssemblyVersion>
-    <FileVersion>1.4.1</FileVersion>
+    <AssemblyVersion>1.4.1.1</AssemblyVersion>
+    <FileVersion>1.4.1.1</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -44,7 +44,7 @@
   <PropertyGroup>
     <DelaySign>False</DelaySign>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>X:\BT.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\snk.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
