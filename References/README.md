@@ -9,6 +9,7 @@ NuGet Packages can be installed with the package manager
 
 |Name                    | Version |Framework       |Link                                           |
 |------------------------|---------|----------------|-----------------------------------------------|
-| SimpleLog4.NET	 | 1.0.4   | netstandard2.0 |https://nuget.org/packages/SimpleLog4.NET      |
+| SimpleLog4.NET		 | 1.0.5   | netstandard2.0 |https://nuget.org/packages/SimpleLog4.NET      |
 | TimerSink.NET	         | 4.2.5   | netstandard2.0 |https://nuget.org/packages/TimerSink.NET       |
 | LoopDelay.NET          | 1.0.2   | netstandard2.0 |https://nuget.org/packages/LoopDelay.NET       |
+| Identity.NET           | 1.0.0   | netstandard2.0 |https://nuget.org/packages/Identity.NET        |

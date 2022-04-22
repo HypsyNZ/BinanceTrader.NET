@@ -17,6 +17,7 @@ using BTNET.BVVM.Controls;
 using BTNET.BVVM.Helpers;
 using BTNET.BVVM.Log;
 using BTNET.VM.ViewModels;
+using Identity.NET;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -34,6 +35,8 @@ namespace BTNET.BVVM
 
         public MainContext()
         {
+            UniqueIdentity.Initialize(password: "BinanceTrader.NET", pathToIdentity: @"HKEY_LOCAL_MACHINE\SOFTWARE\BinanceTrader.NET", useStrongIdentity: true);
+
             try
             {
                 Sink = new();
@@ -47,6 +50,7 @@ namespace BTNET.BVVM
 
                 Timers = new();
                 MainVM.IsCurrentlyLoading = true;
+
                 Settings.LoadSettings();
 #if !DEBUG_SLOW
                 Task.Run(() =>
@@ -133,6 +137,7 @@ namespace BTNET.BVVM
         private void InitializeAllCommands()
         {
             MainVM.InitializeCommands();
+            SettingsVM.InitializeCommands();
             BorrowVM.InitializeCommands();
             AlertVM.InitializeCommands();
             TradeVM.InitializeCommands();
@@ -240,7 +245,7 @@ namespace BTNET.BVVM
             {
                 ServerTime.ServerTimeTicks = ServerTimeClient.ServerTime.Ticks;
                 ServerTime.Time = ServerTimeClient.ServerTime;
-                ServerTime.UsedWeight = ServerTimeClient.UsedWeight;                
+                ServerTime.UsedWeight = ServerTimeClient.UsedWeight;
             }
             catch (Exception ex)
             {

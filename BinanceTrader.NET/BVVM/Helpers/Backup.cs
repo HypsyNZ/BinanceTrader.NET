@@ -1,6 +1,4 @@
 ﻿using BTNET.BVVM.Log;
-using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.IO;
 
 namespace BTNET.BVVM.Helpers

@@ -1,3 +1,7 @@
+### Version 1.4.1
+- [x] Secure API Keys: Once you save the API Keys they will only be usable on the Current PC
+- [x] Better handling of API Keys
+
 ### Version 1.4.0
 - [x] Improvements to how order updates are processed
 - [x] Update Packages

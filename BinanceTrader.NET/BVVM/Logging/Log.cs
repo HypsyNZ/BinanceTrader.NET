@@ -46,7 +46,7 @@ namespace BTNET.BVVM.Log
 
         public static void Error(string m, Exception ex)
         {
-            LogGeneral.Error(m,ex);
+            LogGeneral.Error(m, ex);
         }
 
         // -1000 UNKNOWN

@@ -61,6 +61,7 @@ namespace BTNET.BVVM
         #region [ Static ]
 
         public static MainViewModel MainVM { get; set; }
+        public static SettingsViewModel SettingsVM { get; set; } = new();
         public static ServerTimeBase ServerTime { get; set; } = new();
         public static OrderBase SelectedListItem { get; set; } = new();
         public static BorrowViewModel BorrowVM { get; set; } = new();

@@ -21,8 +21,8 @@
     <AssemblyName>BinanceTrader.NET</AssemblyName>
     <Description>High Precision Trading App For Binance</Description>
     <Copyright>Copyright © 2022, S Christison</Copyright>
-    <AssemblyVersion>1.4.0</AssemblyVersion>
-    <FileVersion>1.4.0</FileVersion>
+    <AssemblyVersion>1.4.1</AssemblyVersion>
+    <FileVersion>1.4.1</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -127,6 +127,9 @@
     </PackageReference>
     <PackageReference Include="TimerSink.NET">
       <Version>4.2.5</Version>
+    </PackageReference>
+    <PackageReference Include="Identity.NET">
+      <Version>1.0.1</Version>
     </PackageReference>
   </ItemGroup>
 

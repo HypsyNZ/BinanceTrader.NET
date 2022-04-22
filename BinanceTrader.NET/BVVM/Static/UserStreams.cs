@@ -140,7 +140,7 @@ namespace BTNET.BVVM
 
         public static async Task<bool> GetUserStreamSubscription()
         {
-            if (MainVM.ApiKey == null || MainVM.ApiSecret == null)
+            if (!SettingsVM.ApiKeysSet)
             {
                 _ = Static.MessageBox.ShowMessage($"No Api Keys Found, " +
                     $"Some features won't be available until you enter your API Keys in the Settings.",

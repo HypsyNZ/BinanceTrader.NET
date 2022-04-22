@@ -11,18 +11,14 @@
 //******************************************************************************************************
 
 using BinanceAPI;
-using BinanceAPI.Authentication;
-using BinanceAPI.Objects;
 using BTNET.BV.Enum;
 using BTNET.BVVM;
 using BTNET.BVVM.BT;
 using BTNET.BVVM.Helpers;
 using BTNET.BVVM.Log;
 using BTNET.VM.Views;
-using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -54,7 +50,6 @@ namespace BTNET.VM.ViewModels
 
         public void InitializeCommands()
         {
-            SaveSettingsCommand = new DelegateCommand(SaveSettings);
             CloseWindowCommand = new DelegateCommand(OnClosing);
             LostFocusCommand = new DelegateCommand(LostFocus);
             GotFocusCommand = new DelegateCommand(GotFocus);
@@ -124,37 +119,11 @@ namespace BTNET.VM.ViewModels
         public int HideSideMenu
         { get => this.hidesidemenu; set { this.hidesidemenu = value; PC(); } }
 
-        public string ApiSecret
-        { get => this.UserApiKeys.ApiSecret; set { this.UserApiKeys.ApiSecret = value; PC(); } }
-
-        public string ApiKey
-        { get => this.UserApiKeys.ApiKey; set { this.UserApiKeys.ApiKey = value; PC(); } }
-
         public ObservableCollection<BinanceSymbolViewModel> AllSymbolsOnUI
         { get => this.allPrices; set { this.allPrices = value; PC(); } }
 
         public int SelectedTabUI
         { get => (int)Static.CurrentlySelectedSymbolTab; set { Static.CurrentlySelectedSymbolTab = (SelectedTab)value; PC(); } }
-
-        private void SaveSettings(object o)
-        {
-            if (!string.IsNullOrEmpty(ApiKey) && !string.IsNullOrEmpty(ApiSecret))
-            {
-                Directory.CreateDirectory(Static.SettingsPath);
-                File.WriteAllText(Static.settingsfile, JsonConvert.SerializeObject(this.UserApiKeys));
-                BinanceClient.SetDefaultOptions(new BinanceClientOptions() { ApiCredentials = new ApiCredentials(ApiKey, ApiSecret) });
-
-                BTClient.Local.SetApiCredentials(ApiKey, ApiSecret);
-                BTClient.SocketClient.SetApiCredentials(ApiKey, ApiSecret);
-                BTClient.SocketSymbolTicker.SetApiCredentials(ApiKey, ApiSecret);
-
-                Static.MessageBox.ShowMessage(@"API Key and API Secret were saved to File [C:\BNET\Settings\keys.json]", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                Static.MessageBox.ShowMessage("Please enter your API Key and your API Secret", "API Key Missing", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         #region [Closing]
 
@@ -207,9 +176,7 @@ namespace BTNET.VM.ViewModels
 
         private void OnExitMainWindow(object o)
         {
-            var ms = Static.MessageBox.ShowMessage("Are you Sure you want to Exit?", "Exit", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-            if (ms == MessageBoxResult.Yes)
+            if (Static.MessageBox.ShowMessage("Are you Sure you want to Exit?", "Exit", MessageBoxButton.YesNo, MessageBoxImage.Warning, true) == MessageBoxResult.Yes)
             {
                 Application.Current.MainWindow.Close();
             }

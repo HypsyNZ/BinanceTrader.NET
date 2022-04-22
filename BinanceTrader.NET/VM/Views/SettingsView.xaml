@@ -99,7 +99,7 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Foreground="White">API Key</TextBlock>
-                <TextBox Grid.Column="1" Margin="4" Text="{Binding MainVM.ApiKey}" />
+                <TextBox Grid.Column="1" Margin="4" Text="{Binding SettingsVM.ApiKey}" IsEnabled="{Binding SettingsVM.ApiKeyEnabled}" />
             </Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -108,10 +108,12 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Foreground="White">API Secret</TextBlock>
-                <TextBox  Grid.Row="1" Grid.Column="1" Margin="4" Text="{Binding MainVM.ApiSecret}" />
+                <TextBox  Grid.Row="1" Grid.Column="1" Margin="4" Text="{Binding SettingsVM.ApiSecret}" IsEnabled="{Binding SettingsVM.ApiSecretEnabled}" />
             </Grid>
-
-            <Button Margin="5" Padding="20,0" HorizontalAlignment="Right" Command="{Binding MainVM.SaveSettingsCommand}">Save</Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Margin="5" Padding="20,0" HorizontalAlignment="Right" Command="{Binding SettingsVM.ChangeSettingsCommand}" IsEnabled="{Binding SettingsVM.ChangeEnabled}">Change</Button>
+                <Button Margin="5" Padding="20,0" HorizontalAlignment="Right" Command="{Binding SettingsVM.SaveSettingsCommand}" IsEnabled="{Binding SettingsVM.SaveEnabled}">Save</Button>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

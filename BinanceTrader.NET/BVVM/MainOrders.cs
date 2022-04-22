@@ -243,7 +243,7 @@ namespace BTNET.BVVM
                     return Task.CompletedTask;
                 }
                 catch (Exception ex)
-                {                   
+                {
                     if (ex.Message != "Collection was modified; enumeration operation may not execute.") // Ignore
                     {
                         WriteLog.Error("UpdatePnl Error: " + ex.Message + "| HRESULT: " + ex.HResult);
