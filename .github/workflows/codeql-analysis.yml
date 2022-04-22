@@ -33,8 +33,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: "6.0.x"
-        
-    # Add  MsBuild to the PATH: https://github.com/microsoft/setup-msbuild
+
+    # Add MsBuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.1
 
@@ -44,10 +44,10 @@ jobs:
       env:
         Configuration: Debug
         RuntimeIdentifier: win-x64
-
+        
     # Build and create MSIX package
     - name: Build the WPF project in MSIX package mode
-      run: msbuild ${{ env.Solution_Path }} /p:Platform=$env:TargetPlatform /p:RuntimeIdentifier=$env:RuntimeIdentifier /p:Configuration=$env:Configuration /p:AppxBundlePlatforms=$env:Appx_Bundle_Platforms /p:UapAppxPackageBuildMode=$env:BuildMode /p:AppxBundle=$env:AppxBundle /p:AppxPackageDir="$env:AppxPackageDir" /p:GenerateAppxPackageOnBuild=$env:GenerateAppPackage /p:AppxPackageSigningEnabled=$env:SigningEnabled /p:PackageCertificateKeyFile=${{ env.Signing_Certificate }} /p:PackageCertificatePassword=${{ secrets.Pfx_Key }} 
+      run: msbuild ${{ env.Solution_Path }} /p:Platform=$env:TargetPlatform /p:RuntimeIdentifier=$env:RuntimeIdentifier /p:Configuration=$env:Configuration /p:AppxBundlePlatforms=$env:Appx_Bundle_Platforms /p:UapAppxPackageBuildMode=$env:BuildMode /p:AppxBundle=$env:AppxBundle /p:AppxPackageDir="$env:AppxPackageDir" /p:GenerateAppxPackageOnBuild=$env:GenerateAppPackage /p:AppxPackageSigningEnabled=$env:SigningEnabled /p:PackageCertificateKeyFile=${{ env.Signing_Certificate }} /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
       env:
         AppxBundle: Never
         BuildMode: SideloadOnly
@@ -58,4 +58,11 @@ jobs:
         AppxBundlePlatforms: x86|x64|arm|arm64
         SigningEnabled: false
         GenerateAppPackage: false
-
+        
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
