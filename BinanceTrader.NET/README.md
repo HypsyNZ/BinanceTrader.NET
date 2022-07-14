@@ -1,3 +1,13 @@
+### Version 2.2.0.2
+- [x] Changed when `Trade Fee` is updated for the current symbol
+- [x] Changed when `Interest Rate` is updated for the current symbol
+- [x] Changed when `Trade Fees` for all symbols is updated
+- [x] Changed when `Interest Rates` for all symbols is updated
+- [x] Exchange Information will update slightly earlier now
+- [x] Made the `Timing Sinks` static
+- [x] Improved error correction
+- [x] Updated [`TimerSink.NET`](https://www.nuget.org/packages/TimerSink.NET)
+
 ### Version 2.1.9.9
 - [x] Fixed a bug that was preventing `Running Interest` from updating at times.
 - [x] Split some work into a second `TimerSink`
