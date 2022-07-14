@@ -1,0 +1,106 @@
+﻿<!--*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*-->
+
+<Window
+    x:Class="BTNET.VM.Views.AboutView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Status"
+    Width="248"
+    Height="106"
+    Background="Black"
+    Icon="/BV/Resources/about.png"
+    ResizeMode="NoResize"
+    WindowStyle="None">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <BitmapImage x:Key="Exit" UriSource="/BV/Resources/exit.png" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="0"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="0"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="8" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Rectangle
+            Height="8"
+            VerticalAlignment="Center"
+            Fill="{DynamicResource MenuPopupBrush3}"
+            MouseLeftButtonDown="DragWindowOrMaximize" />
+        <StackPanel Grid.Row="1" Background="#242325">
+            <Button
+                Width="20"
+                Height="20"
+                Padding="0"
+                HorizontalAlignment="Right"
+                Background="Transparent"
+                BorderThickness="0"
+                Command="{Binding MainVM.ToggleAboutViewCommand}"
+                Style="{StaticResource ExitButton}"
+                ToolTip="Exit Settings" />
+        </StackPanel>
+        <StackPanel Grid.Row="2">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="White"
+                TextBlock.TextAlignment="Center">
+                <TextBlock Foreground="White" Text="{Binding Product}" />
+                - Version:
+                <TextBlock Foreground="White" Text="{Binding Version}" />
+            </TextBlock>
+            <TextBlock
+                Foreground="AntiqueWhite"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Text="{Binding SettingsVM.IsUpToDate, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"></TextBlock>
+            <TextBlock
+                Margin="5"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="White"
+                TextBlock.TextAlignment="Center">
+                Made By S Christison - ©2022<LineBreak />
+                This is free software,<Hyperlink NavigateUri="https://github.com/HypsyNZ/BinanceTrader.NET" RequestNavigate="Hyperlink_RequestNavigate">
+                    Available on Github
+                </Hyperlink>
+            </TextBlock>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,50 +1,73 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
+using BinanceAPI;
 using BTNET.BV.Enum;
 using BTNET.BVVM;
+using BTNET.BVVM.Log;
 using System;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class QuoteBase : ObservableObject
     {
         private void TradeAmountSell(decimal price, decimal amount)
         {
-            QuoteVM.TradeAmountSell = decimal.Round(amount * price, Static.CurrentStepSize.Scale);
-            TradeVM.OrderQuantity = amount;
+            QuoteVM.TradeAmountSell = decimal.Round((amount * price).Normalize(), 8);
+            TradeVM.OrderQuantity = amount.Normalize();
         }
 
         private void TradeAmountBuy(decimal price, decimal amount)
         {
-            QuoteVM.TradeAmountBuy = decimal.Round(amount * price, Static.CurrentStepSize.Scale);
-            TradeVM.OrderQuantity = amount;
+            QuoteVM.TradeAmountBuy = decimal.Round((amount * price).Normalize(), 8);
+            TradeVM.OrderQuantity = amount.Normalize();
         }
 
         private void QuoteAmountSell(decimal price, decimal amount)
         {
-            QuoteVM.ObserveQuoteOrderQuantityLocalSell = decimal.Round(amount / price, Static.CurrentStepSize.Scale);
-            TradeVM.OrderQuantity = QuoteVM.ObserveQuoteOrderQuantityLocalSell;
+            if (price > 0 && amount > 0)
+            {
+                QuoteVM.ObserveQuoteOrderQuantityLocalSell = (decimal.Round(amount / price, 8)).Normalize();
+                TradeVM.OrderQuantity = QuoteVM.ObserveQuoteOrderQuantityLocalSell.Normalize();
+            }
         }
 
         private void QuoteAmountBuy(decimal price, decimal amount)
         {
-            QuoteVM.ObserveQuoteOrderQuantityLocalBuy = decimal.Round(amount / price, Static.CurrentStepSize.Scale);
-            TradeVM.OrderQuantity = QuoteVM.ObserveQuoteOrderQuantityLocalBuy;
+            if (price > 0 && amount > 0)
+            {
+                QuoteVM.ObserveQuoteOrderQuantityLocalBuy = (decimal.Round(amount / price, 8)).Normalize();
+                TradeVM.OrderQuantity = QuoteVM.ObserveQuoteOrderQuantityLocalBuy.Normalize();
+            }
         }
 
         public void GetQuoteOrderQuantityLocal()
         {
-            if (Static.GetCurrentlySelectedSymbol == null) { return; }
+            if (Static.SelectedSymbolViewModel == null)
+            {
+                return;
+            }
             try
             {
                 if (Static.CurrentlySelectedSymbolTab == SelectedTab.Sell)
@@ -53,18 +76,18 @@ namespace BTNET.Base
                     {
                         if (TradeVM.QuoteHasFocus && !TradeVM.BaseHasfocus && !TradeVM.UseBaseForQuoteBoolSell)
                         {
-                            QuoteAmountSell(Static.RTUB.BestBidPrice, QuoteVM.TradeAmountSell);
+                            QuoteAmountSell(Static.RealTimeUpdate.BestBidPrice, QuoteVM.TradeAmountSell);
                         }
                         else
                         {
-                            TradeAmountSell(Static.RTUB.BestBidPrice, QuoteVM.ObserveQuoteOrderQuantityLocalSell);
+                            TradeAmountSell(Static.RealTimeUpdate.BestBidPrice, QuoteVM.ObserveQuoteOrderQuantityLocalSell);
                         }
 
-                        TradeVM.SymbolPrice = Static.RTUB.BestBidPrice;
+                        TradeVM.SymbolPriceSell = decimal.Round(Static.RealTimeUpdate.BestBidPrice.Normalize(), 8);
                         return;
                     }
 
-                    TradeAmountSell(TradeVM.SymbolPrice, QuoteVM.ObserveQuoteOrderQuantityLocalSell);
+                    TradeAmountSell(TradeVM.SymbolPriceSell, QuoteVM.ObserveQuoteOrderQuantityLocalSell);
 
                     return;
                 }
@@ -73,18 +96,18 @@ namespace BTNET.Base
                 {
                     if (TradeVM.QuoteHasFocus && !TradeVM.BaseHasfocus && !TradeVM.UseBaseForQuoteBoolBuy)
                     {
-                        QuoteAmountBuy(Static.RTUB.BestAskPrice, QuoteVM.TradeAmountBuy);
+                        QuoteAmountBuy(Static.RealTimeUpdate.BestAskPrice, QuoteVM.TradeAmountBuy);
                     }
                     else
                     {
-                        TradeAmountBuy(Static.RTUB.BestAskPrice, QuoteVM.ObserveQuoteOrderQuantityLocalBuy);
+                        TradeAmountBuy(Static.RealTimeUpdate.BestAskPrice, QuoteVM.ObserveQuoteOrderQuantityLocalBuy);
                     }
 
-                    TradeVM.SymbolPrice = Static.RTUB.BestAskPrice;
+                    TradeVM.SymbolPriceBuy = decimal.Round(Static.RealTimeUpdate.BestAskPrice.Normalize(), 8);
                     return;
                 }
 
-                TradeAmountBuy(TradeVM.SymbolPrice, QuoteVM.ObserveQuoteOrderQuantityLocalBuy);
+                TradeAmountBuy(TradeVM.SymbolPriceBuy, QuoteVM.ObserveQuoteOrderQuantityLocalBuy);
             }
             catch (Exception ex)
             {

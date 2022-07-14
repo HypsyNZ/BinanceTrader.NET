@@ -1,71 +1,90 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using ExchangeAPI.Objects;
-using log4net;
+using BinanceAPI.Objects;
 using System;
 using System.Threading.Tasks;
+using static BTNET.BVVM.ObservableObject;
 
-namespace BTNET.BVVM
+namespace BTNET.BVVM.Log
 {
     public static class WriteLog
     {
-        private static readonly ILog log = LogManager.GetLogger("General");
-        private static readonly ILog loga = LogManager.GetLogger("Alerts");
+        private const int UNKNOWN = -1000;
+        private const int TOO_MANY_REQUESTS = -1003;
+        private const int SERVER_BUSY = -1004;
 
         #region [ Static ]
 
-        public static void Alert(object message)
+        public static void Alert(string m)
         {
-            loga.Info(message);
+            _ = Task.Run(() =>
+            {
+                App.LogAlert.Info(m);
+                LogVM.LogView = m;
+            }).ConfigureAwait(false);
         }
 
-        public static void Info(object message)
+        public static void Info(string m)
         {
-            log.Info(message);
+            _ = Task.Run(() =>
+            {
+                App.LogGeneral.Info(m);
+                LogVM.LogView = m;
+            }).ConfigureAwait(false);
         }
 
-        public static void Info(object message, Exception ex)
+        public static void Error(string m)
         {
-            log.Info(message, ex);
+            _ = Task.Run(() =>
+            {
+                App.LogGeneral.Error(m);
+                LogVM.LogView = m;
+            }).ConfigureAwait(false);
         }
 
-        public static void Error(object message)
+        public static void Error(Exception ex)
         {
-            log.Error(message);
+            _ = Task.Run(() =>
+            {
+                App.LogGeneral.Error(ex);
+                LogVM.LogView = "Exception: " + ex.Message + "Trace: " + ex.StackTrace + "| Inner: " + ex.InnerException;
+            }).ConfigureAwait(false);
         }
 
-        public static void Error(object message, Exception ex)
+        public static void Error(string m, Exception ex)
         {
-            log.Error(message, ex);
+            _ = Task.Run(() =>
+            {
+                App.LogGeneral.Error(m, ex);
+                LogVM.LogView = m + " | Exception: " + ex.Message + "Trace: " + ex.StackTrace + "| Inner: " + ex.InnerException;
+            }).ConfigureAwait(false);
         }
-
-        // -1000 UNKNOWN
-        // -1003 TOO_MANY_REQUESTS
-        // -1004 SERVER_BUSY
 
         public static bool ShouldLogResp<T>(WebCallResult<T> d)
         {
-            if (d.Error.Code is (-1003) or (-1004) or (-1000))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public static bool ShouldLogResp<T>(Task<WebCallResult<T>> d)
-        {
-            if (d.Result.Error.Code is (-1003) or (-1004) or (-1000))
+            if (d.Error?.Code is (TOO_MANY_REQUESTS) or (SERVER_BUSY) or (UNKNOWN))
             {
                 return true;
             }

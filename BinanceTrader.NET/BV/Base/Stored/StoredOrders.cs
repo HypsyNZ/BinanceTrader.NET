@@ -1,104 +1,75 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using BTNET.Base;
 using BTNET.BV.Enum;
 using BTNET.BVVM;
-using BTNET.Converters;
-using Newtonsoft.Json;
-using System;
+using BTNET.BVVM.BT;
+using BTNET.BVVM.Log;
+using BTNET.VM.ViewModels;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using static BTNET.BVVM.Stored;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class StoredOrders : ObservableObject
     {
-        public bool IsUpdatingStoredOrders { get; set; } = false;
-        public bool IsLoadingStoredOrders { get; set; } = false;
+        public static int lastTotal { get; set; }
 
         #region [ Load ]
 
-        public void LoadStoredOrdersFromFile()
+        public Task LoadAllStoredOrdersFromFileStorageAsync()
         {
-            Directory.CreateDirectory("c:\\BNET\\Orders\\");
+            Directory.CreateDirectory(App.OrderPath);
 
-            ToS = LoadStoredOrders(storedSpotOrders);
-            ToM = LoadStoredOrders(storedMarginOrders);
-            ToI = LoadStoredOrders(storedIsolatedOrders);
+            ToS = LoadStoredOrdersFromFileStorage(App.StoredSpotOrders, TradingMode.Spot);
+            ToM = LoadStoredOrdersFromFileStorage(App.StoredMarginOrders, TradingMode.Margin);
+            ToI = LoadStoredOrdersFromFileStorage(App.StoredIsolatedOrders, TradingMode.Isolated);
 
-            if (ToS.Count > 0 || ToM.Count > 0 || ToI.Count > 0)
+            if (ToS.Count > 0)
             {
-                MiniLog.AddLine("Loaded Stored Orders..");
+                WriteLog.Info("Loaded [" + ToS.Count() + "] Spot Orders from file");
             }
+
+            if (ToM.Count > 0)
+            {
+                WriteLog.Info("Loaded [" + ToM.Count() + "] Margin Orders from file");
+            }
+
+            if (ToI.Count > 0)
+            {
+                WriteLog.Info("Loaded [" + ToI.Count() + "] Isolated Orders from file");
+            }
+
+            return Task.CompletedTask;
         }
 
-        private ObservableCollection<OrderBase> LoadStoredOrders(string storedOrdersString)
+        private List<OrderBase> LoadStoredOrdersFromFileStorage(string storedOrdersString, TradingMode tradingMode)
         {
-            if (File.Exists(storedOrdersString))
-            {
-                try
-                {
-                    string _storedOrders = File.ReadAllText(storedOrdersString);
-                    if (_storedOrders != null)
-                    {
-                        var _dstoredOrders = JsonConvert.DeserializeObject<ObservableCollection<OrderBase>>(_storedOrders);
-
-                        if (_dstoredOrders != null)
-                        {
-                            return _dstoredOrders;
-                        }
-                        else
-                        {
-                            WriteLog.Error("StoredOrders: TempOrders was Null");
-                            return new();
-                        }
-                    }
-                    else
-                    {
-                        MiniLog.AddLine("No Stored Orders");
-                        WriteLog.Info("No stored Orders");
-                        return new();
-                    }
-                }
-                catch (System.Security.SecurityException)
-                {
-                    _ = Static.MessageBox.ShowMessage($"Why did you do this", "Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return new();
-                }
-                catch (Exception ex)
-                {
-                    WriteLog.Error("Stored Orders: ", ex);
-                    return new();
-                }
-            }
-
-            return new();
-        }
-
-        public ObservableCollection<OrderBase> LoadStoredOrdersCurrentSymbol(ObservableCollection<OrderBase> orders)
-        {
-            if (IsLoadingStoredOrders)
-            {
-                if ((TempOrders != null) && (TempOrders.Count > 0))
-                {
-                    return TempOrders;
-                }
-            }
-
-            return orders != null ? orders : new();
+            return TJson.Load<List<OrderBase>>(storedOrdersString) ?? new List<OrderBase>();
         }
 
         #endregion [ Load ]
@@ -108,59 +79,66 @@ namespace BTNET.Base
         /// <summary>
         /// Get Stored Orders for the Current Symbol
         /// </summary>
-        /// <param name="storedOrders">The stored orders</param>
-        /// <param name="filterDeleted">Filter deleted orders from the stored orders</param>
-        private void GetStoredOrdersCurrentSymbol(List<long> DeletedList, ObservableCollection<OrderBase> storedOrders)
+        /// <param name="DeletedList">List of deleted orders to filter</param>
+        /// <param name="storedOrders">Collection of stored orders</param>
+        /// <param name="tradingMode">The current trading mode</param>
+        /// <returns></returns>
+        private List<OrderBase>? GetMemoryStoredOrdersCurrentSymbol(List<long> DeletedList, List<OrderBase>? storedOrders, TradingMode tradingMode)
         {
+            if (Static.SelectedSymbolViewModel == null)
+            {
+                lastTotal = 0;
+                return null;
+            }
+
             if (storedOrders != null)
             {
-                TempOrders = new ObservableCollection<OrderBase>(storedOrders.Where(s => s.Symbol == Static.GetCurrentlySelectedSymbol.SymbolView.Symbol).Where(s => !DeletedList.Contains(s.OrderId)));
-
-                if (TempOrders != null && TempOrders.Count > 0)
+                var count = storedOrders.Count();
+                if (count != lastTotal)
                 {
-                    IsLoadingStoredOrders = true;
-                    WriteLog.Info("Loaded [" + storedOrders.Count(s => s.Symbol == Static.GetCurrentlySelectedSymbol.SymbolView.Symbol) + "] Orders from file");
+                    lastTotal = count;
+                    var TempOrders = new List<OrderBase>(storedOrders.Where(s => s.Symbol == Static.SelectedSymbolViewModel.SymbolView.Symbol && !DeletedList.Contains(s.OrderId)));
 
-                    return;
+                    if (TempOrders != null && TempOrders.Count > 0)
+                    {
+                        foreach (var order in TempOrders)
+                        {
+                            order.Helper ??= new OrderViewModel(order.Side, tradingMode, order.Symbol!);
+                        }
+
+                        return TempOrders;
+                    }
                 }
             }
-            else
-            {
-                IsLoadingStoredOrders = false;
-                TempOrders = null;
-                WriteLog.Error("Stored Orders was Null while setting Orders");
-            }
+
+            return null;
         }
 
         /// <summary>
         /// Current Symbol and Mode Stored Orders
         /// </summary>
         /// <param name="DeletedList">list of previously deleted orders</param>
-        public void CurrentSymbolModeStoredOrders(List<long> DeletedList)
+        public List<OrderBase>? CurrentSymbolMemoryStoredOrders(List<long> DeletedList)
         {
             // Load stored orders for current symbol
             switch (Static.CurrentTradingMode)
             {
                 // S
                 case TradingMode.Spot:
-                    GetStoredOrdersCurrentSymbol(DeletedList, ToS);
-                    break;
+                    return GetMemoryStoredOrdersCurrentSymbol(DeletedList, ToS, TradingMode.Spot);
 
                 // M
                 case TradingMode.Margin:
-                    GetStoredOrdersCurrentSymbol(DeletedList, ToM);
-                    break;
+                    return GetMemoryStoredOrdersCurrentSymbol(DeletedList, ToM, TradingMode.Margin);
 
                 // I
                 case TradingMode.Isolated:
-                    GetStoredOrdersCurrentSymbol(DeletedList, ToI);
-                    break;
+                    return GetMemoryStoredOrdersCurrentSymbol(DeletedList, ToI, TradingMode.Isolated);
 
                 default:
                     // Error
                     WriteLog.Error("StoredOrders: Mode wasn't selected during symbol change");
-                    MiniLog.AddLine("Stored Orders Wont Load");
-                    break;
+                    return null;
             }
         }
 
@@ -168,119 +146,81 @@ namespace BTNET.Base
 
         #region [ Add ]
 
-        public bool UpdateStoredOrdersAndRefresh(ObservableCollection<OrderBase> OrderUpdate)
+        public bool AddOrderUpdatesToMemoryStorage(List<OrderBase> OrderUpdate)
         {
-            if (IsUpdatingStoredOrders || IsLoadingStoredOrders)
+            if (OrderUpdate != null)
             {
-                AddCurrentOrdersToCollections(OrderUpdate);
-                IsUpdatingStoredOrders = false;
-                IsLoadingStoredOrders = false;
+                foreach (var order in OrderUpdate)
+                {
+                    AddSingleOrderToMemoryStorage(order);
+                }
 
                 return true;
             }
+
             return false;
         }
 
-        public void AddCurrentOrdersToCollections(ObservableCollection<OrderBase> orders)
+        public void AddSingleOrderToMemoryStorage(OrderBase order)
         {
-            switch (Static.CurrentTradingMode)
-            {
-                // Spot Orders
-                case TradingMode.Spot:
-                    {
-                        ToS = AddCurrent(ToS, orders);
-                        break;
-                    }
-                // Margin Orders
-                case TradingMode.Margin:
-                    {
-                        ToM = AddCurrent(ToM, orders);
-                        break;
-                    }
-                // Isolated Orders
-                case TradingMode.Isolated:
-                    {
-                        ToI = AddCurrent(ToI, orders);
-                        break;
-                    }
-                default:
-                    {
-                        // Error
-                        WriteLog.Error("StoredOrders: Mode wasn't selected during order save");
-                        break;
-                    }
-            }
-        }
-
-        private ObservableCollection<OrderBase> AddCurrent(ObservableCollection<OrderBase> OrdersToStore, ObservableCollection<OrderBase> orders)
-        {
-            if (OrdersToStore == null) { return null; }
-
-            if (orders == null) { WriteLog.Error("No New Orders to Add to Collections.."); return OrdersToStore; }
-
-            foreach (var order in orders)
-            {
-                AddSingleOrderToCollection(OrdersToStore, order);
-            }
-
-            return OrdersToStore;
-        }
-
-        public void AddSingleOrder(OrderBase order)
-        {
-            switch (Static.CurrentTradingMode)
+            switch (order.Helper!.OrderTradingMode)
             {
                 case TradingMode.Spot:
                     {
-                        AddSingleOrderToCollection(ToS, order);
+                        AddSingleOrderToMemoryStorageCollection(ToS, order);
                         break;
                     }
 
                 case TradingMode.Margin:
                     {
-                        AddSingleOrderToCollection(ToM, order);
-
+                        AddSingleOrderToMemoryStorageCollection(ToM, order);
                         break;
                     }
 
                 case TradingMode.Isolated:
                     {
-                        AddSingleOrderToCollection(ToI, order);
+                        AddSingleOrderToMemoryStorageCollection(ToI, order);
                         break;
                     }
-
                 default:
+                    WriteLog.Error("Trading Mode information was Expected while loading Stored Order: " + order.OrderId);
                     break;
             }
         }
 
-        private void AddSingleOrderToCollection(ObservableCollection<OrderBase> OrdersToStore, OrderBase order)
+        private void AddSingleOrderToMemoryStorageCollection(List<OrderBase>? OrdersToStore, OrderBase order)
         {
-            var orderExists = OrdersToStore.Where(s => s.OrderId == order.OrderId);
-            if (!orderExists.Any())
+            if (OrdersToStore == null)
+            {
+                return;
+            }
+
+            var orderExists = OrdersToStore.Where(s => s.OrderId == order.OrderId).FirstOrDefault();
+            if (orderExists == null)
             {
                 OrdersToStore.Add(order);
             }
             else
             {
-                foreach (var o in orderExists)
-                {
-                    o.Price = order.Price;
-                    o.QuantityFilled = order.QuantityFilled;
-                    o.Quantity = order.Quantity;
-                    o.Status = order.Status;
-                    o.TimeInForce = order.TimeInForce;
+                orderExists.Price = order.Price;
 
-                    o.MinPos = order.MinPos;
-                    o.OrderFee = order.OrderFee;
-                    o.Fee = order.Fee;
-                    o.Pnl = order.Pnl;
+                orderExists.QuantityFilled = order.QuantityFilled;
+                orderExists.Quantity = order.Quantity;
+                orderExists.Fulfilled = order.Fulfilled;
+                orderExists.CumulativeQuoteQuantityFilled = order.CumulativeQuoteQuantityFilled;
 
-                    o.ITD = order.ITD;
-                    o.ITDQ = order.ITDQ;
-                    o.IPH = order.IPH;
-                    o.IPD = order.IPD;
-                }
+                orderExists.Status = order.Status;
+                orderExists.Pnl = order.Pnl;
+
+                orderExists.Fee = order.Fee;
+                orderExists.MinPos = order.MinPos;
+
+                orderExists.InterestToDate = order.InterestToDate;
+                orderExists.InterestToDateQuote = order.InterestToDateQuote;
+                orderExists.InterestPerHour = order.InterestPerHour;
+                orderExists.InterestPerDay = order.InterestPerDay;
+
+                orderExists.ResetTime = order.ResetTime;
             }
         }
 
@@ -288,31 +228,36 @@ namespace BTNET.Base
 
         #region [ Save ]
 
-        private bool StoreOrders(ObservableCollection<OrderBase> OrdersToStore, string OrdersToStoreFile)
+        private bool WriteOrdersToFileStorage(List<OrderBase> OrdersToStore, string OrdersToStoreFile)
         {
-            var jsonSettings = new JsonSerializerSettings()
-            {
-                ContractResolver = new TypeOnlyContractResolver<OrderBase>()
-            };
-
             if (OrdersToStore != null && OrdersToStore.Count() > 0)
             {
-                var convert = JsonConvert.SerializeObject(OrdersToStore, Formatting.Indented, jsonSettings);
-
-                File.WriteAllText(OrdersToStoreFile, convert);
-                return true;
+                var saved = TJson.Save(OrdersToStore, OrdersToStoreFile);
+                if (saved)
+                {
+                    return true;
+                }
             }
 
             return false;
         }
 
-        public void StoreAllOrderCollections()
+        public void WriteAllOrderCollectionsToFileStorage()
         {
-            if (!StoreOrders(ToS, storedSpotOrders)) { WriteLog.Info("No Reason to Update Stored Spot Orders"); }
+            if (!WriteOrdersToFileStorage(ToS, App.StoredSpotOrders))
+            {
+                WriteLog.Info("No Reason to Update Stored Spot Orders");
+            }
 
-            if (!StoreOrders(ToM, storedMarginOrders)) { WriteLog.Info("No Reason to Update Stored Margin Orders"); }
+            if (!WriteOrdersToFileStorage(ToM, App.StoredMarginOrders))
+            {
+                WriteLog.Info("No Reason to Update Stored Margin Orders");
+            }
 
-            if (!StoreOrders(ToI, storedIsolatedOrders)) { WriteLog.Info("No Reason to Update Stored Isolated Orders"); }
+            if (!WriteOrdersToFileStorage(ToI, App.StoredIsolatedOrders))
+            {
+                WriteLog.Info("No Reason to Update Stored Isolated Orders");
+            }
         }
 
         #endregion [ Save ]

@@ -1,129 +1,125 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 using BinanceAPI.Objects.Spot.MarketData;
 using BTNET.BVVM;
-using Newtonsoft.Json;
+using BTNET.BVVM.BT;
+using BTNET.BVVM.Log;
 using System;
 using System.IO;
-using static BTNET.BVVM.Stored;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class StoredExchangeInfo : ObservableObject
     {
+        private readonly object ExchangeInfoLock = new object();
+
         #region [ Load ]
 
-        public BinanceExchangeInfo LoadExchangeInfoFromFile()
+        public Task LoadExchangeInfoFromFileAsync()
         {
-            Directory.CreateDirectory("c:\\BNET\\Settings\\");
+            Directory.CreateDirectory(App.SettingsPath);
 
-            ExchangeInfo = LoadStoredExchangeInfo(storedExchangeInfo);
+            BinanceExchangeInfo? ExchangeInfo = TJson.Load<BinanceExchangeInfo>(App.StoredExchangeInfo);
 
             if (ExchangeInfo != null)
             {
-                MiniLog.AddLine("Loaded Exchange Informaiton");
-                return ExchangeInfo;
+                WriteLog.Info("Loaded [" + ExchangeInfo.Symbols.Count() + "] symbols exchange information from file");
+                WatchMan.ExchangeInfo.SetWorking();
+
+                lock (ExchangeInfoLock)
+                {
+                    Stored.ExchangeInfo = ExchangeInfo;
+                }
+
+                return Task.CompletedTask;
             }
 
-            return null;
-        }
-
-        private BinanceExchangeInfo LoadStoredExchangeInfo(string storedExchangeInfoString)
-        {
-            if (File.Exists(storedExchangeInfoString))
-            {
-                try
-                {
-                    string _storedExchangeInfo = File.ReadAllText(storedExchangeInfoString);
-                    if (_storedExchangeInfo != null)
-                    {
-                        var _dstoredExchangeInfo = JsonConvert.DeserializeObject<BinanceExchangeInfo>(_storedExchangeInfo);
-
-                        if (_dstoredExchangeInfo != null)
-                        {
-                            return _dstoredExchangeInfo;
-                        }
-                        else
-                        {
-                            WriteLog.Error("ExchangeInfo: Exchange Information couldn't be deserialized");
-                            return null;
-                        }
-                    }
-                    else
-                    {
-                        WriteLog.Error("ExchangeInfo: Exchange Information couldn't be read or doesn't exist");
-                        return null;
-                    }
-                }
-                catch (System.Security.SecurityException)
-                {
-                    _ = Static.MessageBox.ShowMessage($"Why did you do this", "Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return null;
-                }
-                catch (Exception ex)
-                {
-                    WriteLog.Error("Stored Exchange Info: ", ex);
-                    return null;
-                }
-            }
-
-            return null;
+            WatchMan.ExchangeInfo.SetError();
+            return Task.CompletedTask;
         }
 
         #endregion [ Load ]
 
         #region [ Get ]
 
-        public BinanceExchangeInfo GetStoredExchangeInfo()
+        public BinanceSymbol? GetStoredSymbolInformation(string symbol)
         {
-            if (ExchangeInfo != null)
+            if (Stored.ExchangeInfo != null)
             {
-                return ExchangeInfo;
+                lock (ExchangeInfoLock)
+                {
+                    return Stored.ExchangeInfo.Symbols.Where(t => t.Name == symbol).FirstOrDefault();
+                }
             }
 
             return null;
         }
 
+        public BinanceExchangeInfo? GetStoredExchangeInfo
+        {
+            get
+            {
+                if (Stored.ExchangeInfo != null)
+                {
+                    lock (ExchangeInfoLock)
+                    {
+                        return Stored.ExchangeInfo;
+                    }
+                }
+
+                return null;
+            }
+        }
+
         #endregion [ Get ]
 
-        #region [ Set ]
+        #region [Save]
 
-        public void UpdateAndStoreExchangeInfo(BinanceExchangeInfo exchangeInfo)
+        public void UpdateAndStoreExchangeInfo(BinanceExchangeInfo exchangeInfoToStore)
         {
-            if (exchangeInfo == null) { return; }
-
-            ExchangeInfo = exchangeInfo;
-
-            StoreExchangeInfo(ExchangeInfo, storedExchangeInfo);
-        }
-
-        #endregion [ Set ]
-
-        #region [ Save ]
-
-        private bool StoreExchangeInfo(BinanceExchangeInfo exchangeInfoToStore, string exchangeInfoToStoreFile)
-        {
-            if (ExchangeInfo != null)
+            lock (ExchangeInfoLock)
             {
-                var convert = JsonConvert.SerializeObject(ExchangeInfo, Formatting.Indented, new JsonSerializerSettings());
-                File.WriteAllText(storedExchangeInfo, convert);
-
-                return true;
+                Stored.ExchangeInfo = exchangeInfoToStore;
             }
 
-            return false;
+            try
+            {
+                if (exchangeInfoToStore != null)
+                {
+                    TJson.Save(exchangeInfoToStore, App.StoredExchangeInfo);
+                    WriteLog.Info("Updated [" + exchangeInfoToStore.Symbols.Count() + "] symbols Exchange Information and stored it to file");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog.Error("Error while Storing Exchange Information", ex);
+            }
         }
 
-        #endregion [ Save ]
+        #endregion [Save]
     }
 }

@@ -1,0 +1,399 @@
+﻿<!--*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*-->
+
+<Window
+    x:Class="BTNET.VM.Views.OrderDetailView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:tk="clr-namespace:BTNET.Toolkit"
+    xmlns:controls="clr-namespace:BTNET.VM.Controls"
+    Title="{Binding OrderId}"
+    Width="320"
+    Height="245"
+    Background="Black"
+    Closed="Window_Closed"
+    Icon="/BV/Resources/stratview.png"
+    ResizeMode="NoResize"
+    UseLayoutRounding="True"
+    WindowStyle="None">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
+            <BitmapImage x:Key="Top" UriSource="/BV/Resources/Top/top.png" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="0"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="0"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="8" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Rectangle
+            Grid.ColumnSpan="2"
+            Height="8"
+            VerticalAlignment="Center"
+            Fill="{DynamicResource MenuPopupBrush3}"
+            MouseLeftButtonDown="DragWindowOrMaximize" />
+        <StackPanel
+            Grid.Row="1"
+            Grid.ColumnSpan="2"
+            Background="#242325">
+            <Grid>
+                <Grid>
+                    <Button
+                        x:Name="ToggleWindowTopButton"
+                        Width="20"
+                        Height="20"
+                        Padding="0"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="Button_Click_1"
+                        Style="{StaticResource DefaultButton}"
+                        ToolTip="Toggle Window on Top">
+                        <Image
+                            MouseDown="Image_MouseDown"
+                            MouseEnter="Image_MouseEnter"
+                            MouseLeave="Image_MouseLeave"
+                            MouseUp="Image_MouseUp"
+                            Source="{StaticResource Top}" />
+                    </Button>
+                </Grid>
+                <Button
+                    Width="20"
+                    Height="20"
+                    Padding="0"
+                    Background="Transparent"
+                    HorizontalAlignment="Right"
+                    BorderThickness="0"
+                    Click="Exit_Click"
+                    Style="{StaticResource ExitButton}"
+                    ToolTip="Exit Order Detail" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="2"
+            Grid.ColumnSpan="1"
+            Margin="5">
+            <TextBlock
+                Margin="1"
+                FontWeight="Bold"
+                Foreground="White"
+                Text="{Binding Helper.DisplayTradingMode}" />
+            <TextBox
+                Margin="1"
+                Background="Gray"
+                Foreground="White"
+                IsReadOnly="True"
+                Style="{StaticResource TextBoxRounded}"
+                Text="{Binding OrderId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBox
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding CreateTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="The order side"
+                    Text="Side: &#160;" />
+                <TextBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="The order side"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding Side, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="How much of the order has been filled"
+                    Text="Filled: " />
+                <TextBox
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="How much of the order has been filled"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding Fulfilled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="This is the actual price this order filled at where possible (average price) or last price"
+                    Text="Price: " />
+                <TextBox
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="This is the actual price this order filled at where possible (average price) or last price"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding Price, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Grid.Row="4"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="Current profit or loss of the order in quote asset"
+                    Text="PnL: " />
+                <TextBox
+                    Grid.Row="4"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="Current profit or loss of the order in quote asset"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding Pnl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='#,0.00##########'}" />
+                <TextBlock
+                    Grid.Row="5"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="The minimum profit and loss required if you don't want to lose value"
+                    Text="Min PnL: " />
+                <TextBox
+                    Grid.Row="5"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="The minimum profit and loss required if you don't want to lose value"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding MinPos, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='#,0.00##########'}" />
+                <TextBlock
+                    Grid.Row="6"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="The actual fee that was paid for this order, multiplied by 2"
+                    Text="Fee: " />
+                <TextBox
+                    Grid.Row="6"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="The actual fee that was paid for this order, multiplied by 2"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding Fee, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='#,0.00##########'}" />
+                <TextBlock
+                    Grid.Row="7"
+                    Grid.Column="0"
+                    Foreground="White"
+                    ToolTip="The current total for this order in quote asset"
+                    Text="Total: " />
+                <TextBox
+                    Grid.Row="7"
+                    Grid.Column="1"
+                    Margin="1"
+                    Background="Gray"
+                    Foreground="White"
+                    IsReadOnly="True"
+                    ToolTip="The current total for this order in quote asset"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding CumulativeQuoteQuantityFilled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='#,0.00##########'}" />
+            </Grid>
+            <!--<StackPanel Orientation="Horizontal">
+                <TextBlock Text="ITDQ: " Foreground="White" />
+                <TextBlock Text="{Binding InterestToDateQuote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=' \{0:N8\}'}" Foreground="White" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="ITD : " Foreground="White" />
+                <TextBlock Text="{Binding InterestToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=' \{0:N8\}'}" Foreground="White" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="IPH : " Foreground="White" />
+                <TextBlock Text="{Binding InterestPerHour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=' \{0:N8\}'}" Foreground="White" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="IPD : " Foreground="White" />
+                <TextBlock Text="{Binding InterestPerDay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=' \{0:N8\}'}" Foreground="White" />
+            </StackPanel>-->
+        </StackPanel>
+        <StackPanel
+            Grid.Row="2"
+            Grid.Column="2"
+            Grid.ColumnSpan="1">
+            <StackPanel Margin="5">
+                <TextBlock
+                    Margin="1"
+                    FontWeight="Bold"
+                    Foreground="White"
+                    Text="Order Actions" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Margin="2"
+                        Foreground="White"
+                        ToolTip="You should account for some slippage yourself if you are going to use this for limit orders"
+                        Text="Settle Order: " />
+                    <CheckBox
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Margin="2"
+                        ToolTip="You should account for some slippage yourself if you are going to use this for limit orders"
+                        Command="{Binding Helper.SettleOrderToggleCommand}"
+                        IsEnabled="{Binding Helper.SettleOrderEnabled}"
+                        IsChecked="{Binding Helper.ToggleSettleChecked, Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Margin="2"
+                        ToolTip="If borrowing should be used where available when settling automatically"
+                        Foreground="White"
+                        Text="Borrow: " />
+                    <CheckBox
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Margin="2"
+                        IsEnabled="{Binding Helper.SettleControlsEnabled}"
+                        ToolTip="If borrowing should be used where available when settling automatically"
+                        Command="{Binding Helper.BorrowForSettleToggleCommand}"
+                        IsChecked="{Binding Helper.BorrowForSettleChecked, Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
+                    <TextBlock
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Margin="2"
+                        ToolTip="Desired PnL percentage to settle the order, must be a positive number"
+                        Foreground="White"
+                        Text="Settle % : " />
+                    <tk:DecimalUpDown
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        VerticalContentAlignment="Center"
+                        IsEnabled="{Binding Helper.SettleControlsEnabled}"
+                        ToolTip="Desired PnL percentage to settle the order, must be a positive number"
+                        Margin="2,2,2,2"
+                        Minimum="0.001"
+                        Increment="0.01"
+                        Value="{Binding Helper.SettlePercent}" />
+                    <TextBlock
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Margin="2"
+                        ToolTip="Allows you to change the quantity of the order"
+                        Foreground="White"
+                        Text="Modifier: " />
+                    <tk:DecimalUpDown
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        VerticalContentAlignment="Center"
+                        IsEnabled="{Binding Helper.SettleControlsEnabled}"
+                        Margin="2,2,2,2"
+                        ToolTip="Allows you to change the quantity of the order, can be used to reduce the quantity by entering a negative value"
+                        DefaultValue="0"
+                        Increment="{Binding Helper.StepSize}"
+                        Value="{Binding Helper.QuantityModifier}" />
+                    <TextBlock
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Margin="2"
+                        Foreground="White"
+                        Text="Mode: " />
+                    <ComboBox
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        Height="18"
+                        Margin="2"
+                        IsEnabled="false"
+                        SelectedItem="{Binding Helper.SettleMode, Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                        TextBlock.FontSize="9">
+                        <ComboBoxItem IsSelected="True">Market</ComboBoxItem>
+                        <ComboBoxItem>Limit</ComboBoxItem>
+                    </ComboBox>
+                    <TextBlock
+                        Grid.Row="5"
+                        Grid.ColumnSpan="2"
+                        Margin="0,1,0,2"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="Order Quick Tasks" />
+                    <controls:OrderTasksExtended Grid.Row="6" Grid.ColumnSpan="2" />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,19 +1,33 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
+using BTNET.BVVM.Log;
 using System;
 using System.Windows;
+using System.Windows.Threading;
 
-namespace BTNET.BVVM.HELPERS
+namespace BTNET.BVVM.Helpers
 {
     public static class Invoke
     {
@@ -21,13 +35,31 @@ namespace BTNET.BVVM.HELPERS
         {
             try
             {
-                if (Application.Current.Dispatcher.CheckAccess()) { action(); return; }
+                Dispatcher? dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    if (dispatcher.CheckAccess())
+                    {
+                        action();
+                        return;
+                    }
 
-                Application.Current.Dispatcher.Invoke(delegate { action(); });
+                    dispatcher.Invoke(delegate
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog.Error("Invoke Error: ", ex);
+                        }
+                    });
+                }
             }
-            catch (Exception e)
+            catch
             {
-                WriteLog.Info("Invoke Error Reason: " + e.Message + "Inner Exception: " + e.InnerException + " | Stack Trace: " + e.StackTrace + " | HResult: " + e.HResult);
+                // The Dispatcher might throw during closing
             }
         }
 
@@ -35,13 +67,31 @@ namespace BTNET.BVVM.HELPERS
         {
             try
             {
-                if (Application.Current.Dispatcher.CheckAccess()) { action(); return; }
+                Dispatcher? dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    if (dispatcher.CheckAccess())
+                    {
+                        action();
+                        return;
+                    }
 
-                Application.Current.Dispatcher.BeginInvoke((Action)delegate { action(); });
+                    dispatcher.BeginInvoke((Action)delegate
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog.Error("BeginInvoke Error: ", ex);
+                        }
+                    });
+                }
             }
-            catch (Exception e)
+            catch
             {
-                WriteLog.Info("Begin Invoke Error Reason: " + e.Message + "Inner Exception: " + e.InnerException + " | Stack Trace: " + e.StackTrace + " | HResult: " + e.HResult);
+                // The Dispatcher might throw during closing
             }
         }
     }

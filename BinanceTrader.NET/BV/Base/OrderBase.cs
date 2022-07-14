@@ -1,48 +1,66 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 using BinanceAPI.Enums;
-using BTNET.BV.Enum;
 using BTNET.BVVM;
-using BTNET.BVVM.HELPERS;
-using BTNET.Converters;
-using BTNET.ViewModels;
+using BTNET.VM.ViewModels;
+using Newtonsoft.Json;
 using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class OrderBase : ObservableObject
     {
-        private readonly NumericFieldConverter n = new();
+        private OrderViewModel? helper;
 
-        public ICommand CancelCommand { get; set; }
-
-        private SettleWidgetViewModel settle = new();
-
+        private DateTime resetTime = DateTime.MinValue;
         private DateTime time;
         private DateTime? updateTime;
+
         private OrderStatus status;
         private OrderSide side;
         private OrderType type;
-        private long id;
-        private string symbol, timeinforce;
-        private bool isMaker = false;
-        private decimal orderFee, originalQuantity, executedQuantity, price, fee, minPos, iph, ipd, itd;
 
-        public SettleWidgetViewModel SettleWidget
-        { get => this.settle; set { this.settle = value; PC(); } }
+        private long id;
+        private bool isMaker;
+
+        private string symbol = "";
+        private string fulfilled = "";
+        private string timeinforce = "";
+
+        private decimal pnl;
+        private decimal orderFee;
+        private decimal originalQuantity;
+        private decimal executedQuantity;
+        private decimal price;
+        private decimal fee;
+        private decimal minPos;
+        private decimal iph;
+        private decimal ipd;
+        private decimal itd;
+        private decimal itdq;
+        private decimal cumulativeQuoteQuantityFilled;
 
         public long OrderId
         {
@@ -67,7 +85,11 @@ namespace BTNET.Base
         public decimal OrderFee
         {
             get => orderFee;
-            set { orderFee = value; PC(); }
+            set
+            {
+                orderFee = value;
+                PC();
+            }
         }
 
         public decimal Quantity
@@ -87,6 +109,17 @@ namespace BTNET.Base
             {
                 this.executedQuantity = value;
                 PC();
+                CanCancel = CanCancel; // PC();
+            }
+        }
+
+        public decimal CumulativeQuoteQuantityFilled
+        {
+            get => cumulativeQuoteQuantityFilled;
+            set
+            {
+                cumulativeQuoteQuantityFilled = value;
+                PC();
             }
         }
 
@@ -97,9 +130,6 @@ namespace BTNET.Base
             {
                 this.price = value;
                 PC();
-
-                Fee = value;
-                MinPos = value;
             }
         }
 
@@ -109,6 +139,16 @@ namespace BTNET.Base
             set
             {
                 this.time = value;
+                PC();
+            }
+        }
+
+        public DateTime ResetTime
+        {
+            get => this.resetTime;
+            set
+            {
+                this.resetTime = value;
                 PC();
             }
         }
@@ -159,7 +199,11 @@ namespace BTNET.Base
         public bool IsMaker
         {
             get => isMaker;
-            set { isMaker = value; PC(); }
+            set
+            {
+                isMaker = value;
+                PC();
+            }
         }
 
         /// <summary>
@@ -170,13 +214,7 @@ namespace BTNET.Base
             get => this.fee;
             set
             {
-                double t = 0;
-                if (OrderFee > 0)
-                {
-                    t = (((double)Price * (double)QuantityFilled / 100) * ((double)OrderFee * 100)) * 2;
-                }
-
-                this.fee = decimal.Round((decimal)t, 8);
+                this.fee = value;
                 PC();
             }
         }
@@ -189,13 +227,7 @@ namespace BTNET.Base
             get => this.minPos;
             set
             {
-                double t = 0;
-                if (OrderFee > 0)
-                {
-                    t = (((double)Price * (double)QuantityFilled / 100) * ((double)OrderFee * 100)) * 5;
-                }
-
-                this.minPos = decimal.Round((decimal)t, 8);
+                this.minPos = value;
                 PC();
             }
         }
@@ -204,43 +236,57 @@ namespace BTNET.Base
         /// Interest Per Hour
         /// This can become inaccurate if interest rates change after you open the order
         /// </summary>
-        public decimal IPH
+        public decimal InterestPerHour
         {
             get => this.iph;
-            set { this.iph = decimal.Round(value / 24 * QuantityFilled / 100, 8); PC(); }
+            set
+            {
+                this.iph = value;
+                PC();
+            }
         }
 
         /// <summary>
         /// Interest Per Day
         /// This can become inaccurate if interest rates change after you open the order
         /// </summary>
-        public decimal IPD
+        public decimal InterestPerDay
         {
             get => this.ipd;
-            set { this.ipd = decimal.Round(value * QuantityFilled / 100, 8); PC(); }
+            set
+            {
+                this.ipd = value;
+                PC();
+            }
         }
 
         /// <summary>
         /// Interest to Date in Base Price
         /// This can become inaccurate if interest rates change after you open the order
         /// </summary>
-        public decimal ITD
+        public decimal InterestToDate
         {
             get => this.itd;
-            set { this.itd = decimal.Round(value * this.iph, 8); PC(); }
+            set
+            {
+                this.itd = value;
+                PC();
+            }
         }
 
         /// <summary>
         /// Interest to Date in Quote Price
         /// This can become inaccurate if interest rates change after you open the order
         /// </summary>
-        public decimal ITDQ
+        public decimal InterestToDateQuote
         {
-            get => ITD * Price;
-            set => PC();
+            get => itdq;
+            set
+            {
+                itdq = value;
+                PC();
+            }
         }
-
-        private decimal pnl;
 
         /// <summary>
         /// Running Profit and Loss indicator in Quote Price
@@ -250,18 +296,14 @@ namespace BTNET.Base
             get => this.pnl;
             set
             {
-                this.pnl = decimal.Round(value, 8);
+                this.pnl = value;
                 PC();
             }
         }
 
         public string TimeInForce
         {
-            get => this.timeinforce == "GoodTillCancel" ? "GTCancel" : this.timeinforce
-                == "ImmediateOrCancel" ? "IOCancel" : this.timeinforce
-                == "FillOrKill" ? "FOKill" : this.timeinforce
-                == "GoodTillCrossing" ? "GTCross" : this.timeinforce
-                == "GoodTillExpiredOrCanceled" ? "GTExpire" : "NaN";
+            get => this.timeinforce;
             set
             {
                 this.timeinforce = value;
@@ -270,59 +312,34 @@ namespace BTNET.Base
         }
 
         public string Fulfilled
-        { get => this.n.ConvertBasic(QuantityFilled) + "/" + this.n.ConvertBasic(Quantity); set { PC(); } }
-
-        public bool CanCancel => Status is OrderStatus.New or OrderStatus.PartiallyFilled;
-
-        public bool IsOrderBuySide => Side is OrderSide.Buy;
-
-        public bool IsOrderSellSide => Side is OrderSide.Sell;
-
-        public System.Windows.Data.BindingBase TargetNullValue => null;
-
-        /// <summary>
-        /// Cancel an Order
-        /// </summary>
-        /// <param name="o">The currently selected Order</param>
-        public void Cancel(object o)
         {
-            var order = (OrderBase)o;
-            if (order == null)
+            get => fulfilled;
+            set
             {
-                MiniLog.AddLine("Cancel Failed!");
-                _ = Static.MessageBox.ShowMessage($"Order canceling Failed", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                fulfilled = value;
+                PC();
             }
-
-            _ = Task.Run(() =>
-            {
-                var result = Static.CurrentTradingMode switch
-                {
-                    TradingMode.Spot => BTClient.Local.Spot.Order.CancelOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000),
-                    TradingMode.Margin => BTClient.Local.Margin.Order.CancelMarginOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000),
-                    TradingMode.Isolated => BTClient.Local.Margin.Order.CancelMarginOrderAsync(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, order.OrderId, receiveWindow: 1000, isIsolated: true),
-                    _ => null,
-                };
-                if (result != null && result.Result.Success)
-                {
-                    Static.DeletedList.Add(order.OrderId);
-                    MiniLog.AddLine("Order Cancelled!");
-                    MiniLog.AddLine("Order Hidden!");
-                }
-                else
-                {
-                    MiniLog.AddLine("Cancel Failed!");
-                    _ = Static.MessageBox.ShowMessage($"Order canceling failed: {result.Result.Error.Message}", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-                return;
-            }).ConfigureAwait(false);
         }
 
-        public OrderBase()
+        [JsonIgnore]
+        public bool CanCancel
         {
-            SettleWidget.InitializeCommands();
-            CancelCommand = new DelegateCommand(Cancel);
+            get { return Status is OrderStatus.New or OrderStatus.PartiallyFilled && Type != OrderType.Market; }
+            set
+            {
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public OrderViewModel? Helper
+        {
+            get => helper;
+            set
+            {
+                helper = value;
+                PC();
+            }
         }
     }
 }

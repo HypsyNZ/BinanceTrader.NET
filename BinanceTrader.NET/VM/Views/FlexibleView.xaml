@@ -1,0 +1,253 @@
+﻿<!--
+    *
+    *MIT License
+    *
+    *Copyright (c) 2022 S Christison
+    *
+    *Permission is hereby granted, free of charge, to any person obtaining a copy
+    *of this software and associated documentation files (the "Software"), to deal
+    *in the Software without restriction, including without limitation the rights
+    *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    *copies of the Software, and to permit persons to whom the Software is
+    *furnished to do so, subject to the following conditions:
+    *
+    *The above copyright notice and this permission notice shall be included in all
+    *copies or substantial portions of the Software.
+    *
+    *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    *SOFTWARE.
+    *
+-->
+
+<Window
+    x:Class="BTNET.VM.Views.FlexibleView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:BTNET.VM.Controls"
+    Title="Flexible Savings"
+    Width="835"
+    Height="300"
+    MinWidth="835"
+    MinHeight="152"
+    MaxWidth="835"
+    Background="Transparent"
+    Icon="/BV/Resources/savings.png"
+    ResizeMode="CanResizeWithGrip"
+    SizeChanged="Window_SizeChanged"
+    WindowStyle="None">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="0"
+            CornerRadius="0"
+            GlassFrameThickness="0"
+            ResizeBorderThickness="5,0,0,5"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="8" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="25" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Rectangle
+            Height="8"
+            VerticalAlignment="Center"
+            Fill="{DynamicResource MenuPopupBrush3}"
+            MouseLeftButtonDown="DragWindowOrMaximize" />
+        <StackPanel Grid.Row="1" Background="#242325">
+            <Grid>
+                <StackPanel Margin="0,0,0,0" Orientation="Horizontal">
+                    <Slider
+                        Grid.Column="6"
+                        Width="50"
+                        Height="14"
+                        VerticalAlignment="Center"
+                        Maximum="1"
+                        Minimum="0.2"
+                        ToolTip="Set the Opacity of Flexible Products"
+                        ValueChanged="Slider_ValueChanged"
+                        Value="0.90" />
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <TextBlock
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Margin="10,0,0,0"
+                        HorizontalAlignment="Left"
+                        Foreground="White"
+                        Text="{Binding FlexibleVM.PossibleRatesCurrentAsset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        ToolTip="Average Annual Interest Rate Tiers for the currently selected Flexible Product" />
+                    <Button
+                        Grid.Column="1"
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,2,0"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding MainVM.ToggleFlexibleCommand}"
+                        Style="{StaticResource ExitButton}"
+                        ToolTip="Exit Flexible Products" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+        <StackPanel
+            x:Name="stackPanel"
+            Grid.Row="2"
+            VerticalAlignment="Center"
+            Background="Black"
+            Opacity="0.90">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Text="Flexible Savings Asset" />
+                <ComboBox
+                    x:Name="combobox"
+                    Grid.Column="1"
+                    Height="23"
+                    Margin="2"
+                    FontSize="11"
+                    IsEditable="True"
+                    IsEnabled="{Binding FlexibleVM.ProductSelectionEnabled, UpdateSourceTrigger=PropertyChanged}"
+                    IsTextSearchEnabled="True"
+                    ItemsSource="{Binding FlexibleVM.AllProductsSelection}"
+                    SelectedItem="{Binding FlexibleVM.SelectedProduct}"
+                    Text="{Binding FlexibleVM.ResetText, UpdateSourceTrigger=PropertyChanged}"
+                    ToolTip="Flexible Savings Product to Subscribe to when Available" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock
+                        Width="50"
+                        Margin="5,0,2,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="White"
+                        IsEnabled="{Binding FlexibleVM.SubscribeEnabled}"
+                        Text="Amount"
+                        ToolTip="The amount of the asset to subscribe, Defaults to max available amount"
+                        Visibility="{Binding FlexibleVM.SubscribeAmountVisible, Converter={StaticResource BoolToVis}}" />
+                    <TextBox
+                        Width="65"
+                        Height="23"
+                        VerticalContentAlignment="Center"
+                        IsEnabled="{Binding FlexibleVM.SubscribeEnabled}"
+                        Style="{StaticResource TextBoxRounded}"
+                        Text="{Binding FlexibleVM.SubscribeAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        ToolTip="The amount of the asset to subscribe, Defaults to max available amount"
+                        Visibility="{Binding FlexibleVM.SubscribeAmountVisible, Converter={StaticResource BoolToVis}}" />
+                    <Button
+                        Width="65"
+                        Height="23"
+                        Margin="2,0,2,0"
+                        Command="{Binding FlexibleVM.AddPositionCommand}"
+                        Content="Subscribe"
+                        IsEnabled="{Binding FlexibleVM.SubscribeEnabled}"
+                        ToolTip="Subscribes to the selected Asset with the Amount specified" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="4"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Text="{Binding FlexibleVM.SelectedPositionString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Visibility="{Binding FlexibleVM.RedeemAmountVisible, Converter={StaticResource BoolToVis}}" />
+                <TextBox
+                    Grid.Column="5"
+                    Height="23"
+                    VerticalContentAlignment="Center"
+                    IsEnabled="{Binding FlexibleVM.RedeemAmountEnabled}"
+                    Style="{StaticResource TextBoxRounded}"
+                    Text="{Binding FlexibleVM.RedeemAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    ToolTip="The amount to Redeem, Defaults to the maximum amount available"
+                    Visibility="{Binding FlexibleVM.RedeemAmountVisible, Converter={StaticResource BoolToVis}}" />
+                <Button
+                    Grid.Column="6"
+                    Width="65"
+                    Height="23"
+                    Command="{Binding FlexibleVM.RedeemSelectedPositionCommand}"
+                    Content="Redeem"
+                    IsEnabled="{Binding FlexibleVM.RedeemEnabled}"
+                    ToolTip="Fast Redeems the currently selected asset for the amount specified" />
+            </Grid>
+        </StackPanel>
+
+        <controls:SortableListView
+            x:Name="flexibleListView"
+            Grid.Row="3"
+            Background="Black"
+            BorderThickness="0"
+            Foreground="AntiqueWhite"
+            IsHitTestVisible="{Binding FlexibleVM.ProductSelectionEnabled}"
+            ItemsSource="{Binding FlexibleVM.AllPositions, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+            Opacity="0.85"
+            ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+            SelectedItem="{Binding FlexibleVM.SelectedPosition}">
+            <controls:SortableListView.View>
+                <GridView AllowsColumnReorder="false">
+                    <GridViewColumn
+                        Width="85"
+                        DisplayMemberBinding="{Binding Asset}"
+                        Header="Asset" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding TotalAmount, StringFormat='#,0.0###########'}"
+                        Header="Total Amount" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding TotalInterest, StringFormat='#,0.0###########'}"
+                        Header="Total Interest" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding DailyInterestRate, StringFormat='P5'}"
+                        Header="Daily Interest" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding AverageAnnualInterestRate, StringFormat='P5'}"
+                        Header="Annual Interest" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding FreeAmount, StringFormat='#,0.0###########'}"
+                        Header="Free Amount" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding LockedAmount, StringFormat='#,0.0###########'}"
+                        Header="Locked Amount" />
+                    <GridViewColumn
+                        Width="105"
+                        DisplayMemberBinding="{Binding FreezeAmount, StringFormat='#,0.0###########'}"
+                        Header="Freeze Amount" />
+                </GridView>
+            </controls:SortableListView.View>
+        </controls:SortableListView>
+    </Grid>
+</Window>

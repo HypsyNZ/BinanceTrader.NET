@@ -1,77 +1,125 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security;
+using BTNET.BVVM;
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
-namespace BTNET.Views
+namespace BTNET.VM.Views
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainView : Window
     {
         public MainView()
         {
-#if RELEASE
-            Process[] processes = Process.GetProcessesByName("BinanceTrader.NET");
-            if (processes.Length > 1) { System.Environment.Exit(4); }
-#endif
-
-            _ = WinApi.TimeBeginPeriod(1);
             InitializeComponent();
             //this.Topmost = true;
-        }
-
-        // Punish bad apps by setting a global
-        public static class WinApi
-        {
-            /// <summary>TimeBeginPeriod(). See the Windows API documentation for details.</summary>
-            [SuppressUnmanagedCodeSecurity]
-            [DllImport("winmm.dll", EntryPoint = "timeBeginPeriod", SetLastError = true)]
-            public static extern uint TimeBeginPeriod(uint uMilliseconds);
-
-            /// <summary>TimeEndPeriod(). See the Windows API documentation for details.</summary>
-            [SuppressUnmanagedCodeSecurity]
-            [DllImport("winmm.dll", EntryPoint = "timeEndPeriod", SetLastError = true)]
-            public static extern uint TimeEndPeriod(uint uMilliseconds);
+            this.Focus();
+            this.BringIntoView();
         }
 
         private void SortableListViewColumnHeaderClicked(object sender, RoutedEventArgs e)
         {
-            ((Controls.SortableListView)sender).GridViewColumnHeaderClicked(e.OriginalSource as GridViewColumnHeader);
+            if (e.OriginalSource is GridViewColumnHeader f)
+            {
+                ((Controls.SortableListView)sender).GridViewColumnHeaderClicked(f);
+            }
         }
 
         private void Rectangle_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (e.ClickCount == 2)
+            if (e.ClickCount == App.RAPID_CLICKS_TO_MAXIMIZE_WINDOW)
             {
-                WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+                var state = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+                WindowState = state;
+
+                switch (state)
+                {
+                    case WindowState.Normal:
+                        ObservableObject.MainVM.ListViewControlHeightOffset = App.ORDER_LIST_MAX_HEIGHT_OFFSET_NORMAL;
+                        break;
+
+                    default:
+                        ObservableObject.MainVM.ListViewControlHeightOffset = App.ORDER_LIST_MAX_HEIGHT_OFFSET_MAXIMIZED;
+                        break;
+                }
+
+                _ = MainContext.ResetControlPositionsAsync();
+                _ = MainContext.PaddingWidthAsync();
             }
 
+            BorderThickness = MainContext.BorderAdjustment(WindowState);
             DragMove();
         }
 
         private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            BorderThickness = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
+            BorderBrush = Brushes.Transparent;
+            BorderThickness = MainContext.BorderAdjustment(WindowState);
         }
 
-        private void Minilog_TextChanged(object sender, TextChangedEventArgs e)
+        private void Image_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            this.Minilog.ScrollToEnd();
+            var s = sender as Image;
+
+            if (s != null)
+            {
+                if (closed)
+                {
+                    s.Source = new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Side/open-side-menu-pressed.png"));
+                }
+                else
+                {
+                    s.Source = new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Side/close-side-menu-pressed.png"));
+                }
+            }
+        }
+
+        private void Image_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            var s = sender as Image;
+
+            if (s != null)
+            {
+                if (closed)
+                {
+                    s.Source = new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Side/open-side-menu.png"));
+                }
+                else
+                {
+                    s.Source = new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Side/close-side-menu.png"));
+                }
+            }
+        }
+
+        private bool closed;
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            closed = !closed;
         }
     }
 }

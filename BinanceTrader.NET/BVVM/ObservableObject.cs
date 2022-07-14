@@ -1,20 +1,36 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using BTNET.Abstract;
-using BTNET.Base;
-using BTNET.ViewModels;
-using ExchangeAPI.Sockets;
+using BinanceAPI;
+using BTNET.BV.Abstract;
+using BTNET.BV.Base;
+using BTNET.BVVM.BT;
+using BTNET.VM.ViewModels;
+using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using TimerSink;
 
@@ -24,7 +40,7 @@ namespace BTNET.BVVM
     {
         #region [PropertyChangedEvent]
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void PC([CallerMemberName] string callerName = "")
         {
@@ -33,32 +49,105 @@ namespace BTNET.BVVM
 
         #endregion [PropertyChangedEvent]
 
-        public TimingSink Sink = new();
-        public TimingSink SinkRT = new();
+        private decimal minTickSize;
+        private decimal minPrice;
+        private decimal quantityMin;
+        private decimal quantityMax;
+        private decimal priceMax;
+        private decimal priceTickSize;
+        private readonly ApiKeys userApiKeys = new();
 
-        public string symbolSearchValue;
-        private decimal minTickSize, incrementLotSizeMin;
-        private bool searchEnabled = false;
-        private bool symbolSelected = false;
+        [JsonIgnore]
+        public ApiKeys UserApiKeys => this.userApiKeys;
 
-        public readonly ApiKeys UserApiKeys = new();
+        [JsonIgnore]
+        public static TimingSink? Sink { get; set; }
 
-        public decimal MinTickSize
-        { get => this.minTickSize; set { this.minTickSize = value; PC(); } }
+        [JsonIgnore]
+        public static TimingSink? SinkTwo { get; set; }
 
-        public decimal IncrementLotSizeMin
-        { get => this.incrementLotSizeMin; set { this.incrementLotSizeMin = value; PC(); } }
+        [JsonIgnore]
+        public string SymbolSearchValue { get; set; } = "";
 
-        public bool SearchEnabled
-        { get => this.searchEnabled; set { this.searchEnabled = value; PC(); } }
+        [JsonIgnore]
+        public static string Product { get; } = ((AssemblyProductAttribute)Attribute.GetCustomAttribute(typeof(App).Assembly,
+            typeof(AssemblyProductAttribute), false)).Product;
 
-        public bool IsSymbolSelected
-        { get => this.symbolSelected; set { this.symbolSelected = value; PC(); } }
+        [JsonIgnore]
+        public static string Version { get; } = ((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(typeof(App).Assembly,
+            typeof(AssemblyFileVersionAttribute), false)).Version;
+
+        [JsonIgnore]
+        public decimal QuantityTickSize
+        {
+            get => minTickSize;
+            set
+            {
+                minTickSize = value.Normalize();
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public decimal QuantityMin
+        {
+            get => quantityMin;
+            set
+            {
+                quantityMin = value.Normalize();
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public decimal QuantityMax
+        {
+            get => quantityMax;
+            set
+            {
+                quantityMax = value.Normalize();
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public decimal PriceTickSize
+        {
+            get => priceTickSize;
+            set
+            {
+                priceTickSize = value.Normalize();
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public decimal PriceMin
+        {
+            get => minPrice;
+            set
+            {
+                minPrice = value.Normalize();
+                PC();
+            }
+        }
+
+        [JsonIgnore]
+        public decimal PriceMax
+        {
+            get => priceMax; set
+            {
+                priceMax = value.Normalize();
+
+                PC();
+            }
+        }
 
         #region [ Static ]
 
-        public static MainViewModel MainVM { get; set; }
-        public static ServerTimeBase ServerTime { get; set; } = new();
+        public static MainViewModel MainVM { get; set; } = new(null!);
+        public static SettingsViewModel SettingsVM { get; set; } = new();
+        public static ServerTimeViewModel ServerTimeVM { get; set; } = new();
         public static OrderBase SelectedListItem { get; set; } = new();
         public static BorrowViewModel BorrowVM { get; set; } = new();
         public static QuoteViewModel QuoteVM { get; set; } = new();
@@ -67,6 +156,18 @@ namespace BTNET.BVVM
         public static RealTimeUpdateViewModel RealTimeVM { get; set; } = new();
         public static SettleViewModel SettleVM { get; set; } = new();
         public static AlertViewModel AlertVM { get; set; } = new();
+        public static NotepadViewModel NotepadVM { get; set; } = new();
+        public static VisibilityViewModel VisibilityVM { get; set; } = new();
+        public static LogViewModel LogVM { get; set; } = new();
+
+        public static FlexibleViewModel FlexibleVM { get; set; } = new();
+
+        public static Timing? Timers { get; set; }
+        public static MainOrders Orders { get; set; } = new();
+
+#pragma warning disable CS8618 // Won't be null
+        public static BTClient Client { get; set; }
+#pragma warning restore CS8618 // Won't be null
 
         #endregion [ Static ]
     }

@@ -1,34 +1,50 @@
-﻿<!--******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************-->
+﻿<!--*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*-->
 
 <Window
-    x:Class="BTNET.Views.WatchlistView"
+    x:Class="BTNET.VM.Views.WatchlistView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:BTNET.Controls"
-    xmlns:converters="clr-namespace:BTNET.Converters"
+    xmlns:controls="clr-namespace:BTNET.VM.Controls"
+    x:Name="watchlistWindow"
     Title="Watchlist"
-    Width="790"
-    Height="352"
-    Background="Black"
-    Icon="/BV/Resources/bellicon.png"
-    ResizeMode="NoResize"
-    WindowStyle="SingleBorderWindow">
+    Width="850"
+    Height="200"
+    MinWidth="850"
+    MinHeight="152"
+    MaxWidth="850"
+    AllowsTransparency="True"
+    Background="Transparent"
+    Icon="/BV/Resources/watchlist.png"
+    ResizeMode="CanResizeWithGrip"
+    SizeChanged="Window_SizeChanged"
+    WindowStyle="None">
 
     <Window.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
-            <converters:WidthConverter x:Key="WidthConvert" />
-            <BitmapImage x:Key="Exit" UriSource="/BV/Resources/exit.jpg" />
+            <BitmapImage x:Key="Remove" UriSource="/BV/Resources/remove.png" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -37,118 +53,163 @@
             CaptionHeight="0"
             CornerRadius="0"
             GlassFrameThickness="0"
-            ResizeBorderThickness="0"
+            ResizeBorderThickness="5,0,5,5"
             UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
 
-    <Grid>
+    <Grid Background="Transparent">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="8" />
-            <RowDefinition Height="18" />
             <RowDefinition Height="20" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-
         <Rectangle
             Height="8"
             VerticalAlignment="Center"
             Fill="{DynamicResource MenuPopupBrush3}"
             MouseLeftButtonDown="DragWindowOrMaximize" />
-
-        <StackPanel Grid.Row="1" Background="#242325">
-            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button
-                    Width="16"
-                    Height="16"
-                    Margin="0,1,2,0"
-                    HorizontalAlignment="Right"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Command="{Binding MainVM.CloseWatchlistCommand}"
-                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                    ToolTip="Exit Panel">
-                    <Image Source="{StaticResource Exit}" />
-                </Button>
-            </StackPanel>
+        <StackPanel Grid.Row="1" Background="#242325" />
+        <StackPanel
+            Grid.Row="1"
+            Height="20"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Slider
+                Grid.Column="3"
+                Width="50"
+                VerticalAlignment="Center"
+                Maximum="1"
+                Minimum="0.2"
+                ToolTip="Set the Opacity of the Watchlist"
+                ValueChanged="Slider_ValueChanged"
+                Value="0.65" />
+            <Button
+                Width="20"
+                Height="20"
+                VerticalAlignment="Center"
+                VerticalContentAlignment="Center"
+                Command="{Binding MainVM.ToggleWatchlistCommand}"
+                Style="{StaticResource ExitButton}"
+                ToolTip="Exit Watchlist" />
         </StackPanel>
-
-        <StackPanel Grid.Row="2">
-            <Grid>
+        <StackPanel
+            x:Name="stackPanel"
+            Grid.Row="1"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Opacity="0.7">
+            <Grid Height="20">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="117" />
+                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="55" />
                 </Grid.ColumnDefinitions>
-
                 <TextBlock
                     Grid.Column="0"
-                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Foreground="White"
-                    Text="Watchlist Symbol" />
-
+                    Text="Watchlist Symbol"
+                    TextAlignment="Center" />
                 <Button
                     Grid.Column="2"
+                    Margin="2,0,0,0"
+                    VerticalAlignment="Center"
                     Command="{Binding WatchListVM.AddToWatchlistCommand}"
-                    Content="Add Symbol" />
-                <Button
-                    Grid.Column="3"
-                    Command="{Binding WatchListVM.RemoveFromWatchlistCommand}"
-                    Content="Remove Symbol"
-                    ToolTip="Removes the Selected Alert" />
-                <TextBox Grid.Column="1" Text="{Binding WatchListVM.WatchlistSymbol}" />
+                    Content="Add"
+                    IsEnabled="{Binding WatchListVM.WatchlistSymbolsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource ButtonNormal}" />
+                <ComboBox
+                    x:Name="combobox"
+                    Grid.Column="1"
+                    AllowDrop="False"
+                    FontSize="11"
+                    IsEditable="True"
+                    IsEnabled="{Binding WatchListVM.WatchlistSymbolsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                    IsTextSearchEnabled="True"
+                    ItemsSource="{Binding WatchListVM.AllWatchlistSymbols, Mode=OneWay, UpdateSourceTrigger=Explicit}"
+                    SelectedItem="{Binding WatchListVM.SelectedWatchlistSymbol}"
+                    Text="{Binding WatchListVM.ResetText, UpdateSourceTrigger=PropertyChanged}"
+                    ToolTip="Watchlist symbol to subscribe to, You can search without opening the drop down" />
             </Grid>
-            <StackPanel />
         </StackPanel>
-
         <controls:SortableListView
+            x:Name="sortableListView"
             Grid.Row="3"
-            Background="DarkGray"
+            Background="Black"
+            BorderThickness="0"
+            Foreground="AliceBlue"
             ItemsSource="{Binding WatchListVM.WatchListItems, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-            ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-            SelectedItem="{Binding WatchListVM.SelectedWatchlistItem}">
+            Opacity="1"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.VerticalScrollBarVisibility="Disabled">
             <controls:SortableListView.View>
-                <GridView>
+                <GridView AllowsColumnReorder="False">
                     <GridViewColumn
-                        Width="85"
+                        Width="20">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Width="10" Height="10" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistSymbol}"
                         Header="Symbol" />
                     <GridViewColumn
-                        Width="86"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistPrice, StringFormat='#,0.0###########'}"
                         Header="Price" />
                     <GridViewColumn
-                        Width="85"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistBidPrice, StringFormat='#,0.0###########'}"
                         Header="Bid" />
                     <GridViewColumn
-                        Width="85"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistAskPrice, StringFormat='#,0.0###########'}"
                         Header="Ask" />
                     <GridViewColumn
-                        Width="85"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistHigh, StringFormat='#,0.0###########'}"
                         Header="High" />
                     <GridViewColumn
-                        Width="85"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistLow, StringFormat='#,0.0###########'}"
                         Header="Low" />
                     <GridViewColumn
-                        Width="85"
+                        Width="88"
                         DisplayMemberBinding="{Binding WatchlistClose, StringFormat='#,0.0###########'}"
                         Header="Close" />
                     <GridViewColumn
                         Width="65"
-                        DisplayMemberBinding="{Binding WatchlistChange, StringFormat='#,0.0###########'}"
+                        DisplayMemberBinding="{Binding WatchlistChange, StringFormat=' \{0:N3\}%', FallbackValue=9999.99}"
                         Header="Change" />
                     <GridViewColumn
-                        Width="128"
-                        DisplayMemberBinding="{Binding WatchlistVolume, StringFormat='#,0.###################'}"
+                        Width="119"
+                        DisplayMemberBinding="{Binding WatchlistVolume, StringFormat='#,0.###################', FallbackValue=999 999 999 999 999}"
                         Header="Volume" />
+                    <GridViewColumn Width="30">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <Button
+                                        Width="20"
+                                        Height="20"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Command="{Binding WatchListVM.RemoveFromWatchlistCommand}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                                        <Image Source="{StaticResource Remove}" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                 </GridView>
             </controls:SortableListView.View>
         </controls:SortableListView>

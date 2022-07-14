@@ -1,86 +1,101 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
+using BinanceAPI;
 using BinanceAPI.Objects.Spot.MarginData;
 using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.Base;
+using BTNET.BV.Base;
 using BTNET.BV.Enum;
-using BTNET.BVVM.HELPERS;
-using BTNET.BVVM.MessageBox;
-using BTNET.ViewModels;
-using ExchangeAPI.Sockets;
-using System;
+using BTNET.VM.ViewModels;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 
 namespace BTNET.BVVM
 {
     // There can only be one
     public static class Static
     {
-        public static IMessageBoxService MessageBox = new MessageBoxService();
+        private static volatile BinanceSymbolViewModel? selectedSymbolViewModel;
+        private static volatile BinanceSymbolViewModel? lastSelectedSymbolViewModel;
 
-        public static string SystemDrive = Path.GetPathRoot(Environment.SystemDirectory);
-        public static readonly string SettingsPath = SystemDrive + @"BNET\Settings\";
-
-        public static DecimalHelper CurrentStepSize = new();
-
-        public static readonly string logClient = SystemDrive + @"BNET\logClient.txt";
-        public static readonly string logSocket = SystemDrive + @"BNET\logSocket.txt";
-        public static readonly string settingsfile = SettingsPath + @"keys.json";
-        public static readonly string listofdeletedorders = SettingsPath + @"list.json";
-        public static readonly string listofwatchlistsymbols = SettingsPath + @"symbols.json";
-
-        public static TradingMode CurrentTradingMode = TradingMode.Error;
-        public static SelectedTab CurrentlySelectedSymbolTab = SelectedTab.Error;
-
-        public static StoredExchangeInfo ManageExchangeInfo = new StoredExchangeInfo();
+        public static StoredExchangeInfo ManageExchangeInfo { get; set; } = new();
         public static StoredOrders ManageStoredOrders { get; set; } = new();
-        public static RealTimeUpdateBase RTUB { get; set; } = new();
-        public static BinanceMarginAccount MarginAccount { get; set; } = new();
-        public static BinanceSymbol CurrentSymbolInfo { get; set; } = new();
+        public static StoredAlerts ManageStoredAlerts { get; set; } = new();
+        public static StoredQuotes ManageStoredQuotes { get; set; } = new();
 
-        public static ChartBase chartBases = new();
-        public static QuoteBase Quote = new();
+        public static RealTimeUpdateBase RealTimeUpdate { get; set; } = new();
+        public static BinanceMarginAccount MarginAccount { get; set; } = new();
+        public static BinanceSymbol? CurrentSymbolInfo { get; set; } = new();
 
         public static ObservableCollection<BinanceSymbolViewModel> AllPrices { get; set; } = new();
-        public static ObservableCollection<BinanceSymbolViewModel> AllPricesFiltered { get; set; } = new();
-
-        public static UpdateSubscription CurrentSymbolTickerUpdateSubscription = null;
-
+        public static ObservableCollection<BinanceSymbolViewModel> AllPricesUnfiltered { get; set; } = new();
         public static List<long> DeletedList { get; set; } = new List<long>();
+        public static List<long> SettledOrders { get; set; } = new List<long>();
 
         public static string SpotListenKey { get; set; } = "";
         public static string MarginListenKey { get; set; } = "";
         public static string IsolatedListenKey { get; set; } = "";
         public static string LastIsolatedListenKeySymbol { get; set; } = "";
 
-        public static bool IsStarted { get; set; } = false;
-        public static bool IsListFocus { get; set; } = false;
-        public static bool IsSearching { get; set; } = false;
-        public static bool WaitingForOrderUpdate { get; set; } = false;
-        public static bool BlockOrderUpdates { get; set; } = false;
-        public static bool ShouldUpdateExchangeInfo { get; set; } = false;
+        public static bool IsStarted { get; set; }
+        public static bool IsListFocus { get; set; }
+        public static bool IsSearching { get; set; }
+        public static bool GetIsSymbolSelected { get; set; }
 
-        public static volatile ObservableCollection<OrderBase> orders;
-        public static volatile BinanceSymbolViewModel selectedSymbolViewModel;
-        public static volatile BinanceSymbolViewModel lastSelectedSymbolViewModel;
+        public static BinanceSymbolViewModel? SelectedSymbolViewModel
+        {
+            get => selectedSymbolViewModel;
+            set => selectedSymbolViewModel = value;
+        }
 
-        #region [ Read Only ]
+        public static BinanceSymbolViewModel? LastSelectedSymbolViewModel
+        {
+            get => lastSelectedSymbolViewModel;
+            set => lastSelectedSymbolViewModel = value;
+        }
 
-        public static BinanceSymbolViewModel GetCurrentlySelectedSymbol => selectedSymbolViewModel;
-        public static ObservableCollection<OrderBase> GetOrders => orders;
+        public static Message MessageBox { get; set; } = new();
 
-        #endregion [ Read Only ]
+        public static SelectedTab CurrentlySelectedSymbolTab { get; set; } = SelectedTab.Error;
+        public static TradingMode CurrentTradingMode { get; set; } = TradingMode.Error;
+
+        public static ChartBase ChartBases { get; set; } = new();
+        public static QuoteBase RealTimeQuote { get; set; } = new();
+
+        internal static bool HasAuth()
+        {
+            return Settings.KeysLoaded && ObservableObject.MainVM.IsSymbolSelected && ServerTimeClient.IsReady();
+        }
+
+        public static bool IsInvalidSymbol()
+        {
+            if (!ObservableObject.MainVM.IsSymbolSelected || Static.SelectedSymbolViewModel == null || Static.CurrentTradingMode == TradingMode.Error)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

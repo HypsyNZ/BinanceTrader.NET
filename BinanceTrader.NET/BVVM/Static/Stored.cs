@@ -1,33 +1,43 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.Base;
+using BTNET.BV.Abstract;
+using BTNET.BV.Base;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace BTNET.BVVM
 {
-    public class Stored : ObservableObject
+    public static class Stored
     {
-        public static readonly string storedExchangeInfo = Static.SettingsPath + @"ExchangeInfoCopy.json";
-        public static readonly string storedSpotOrders = Static.SystemDrive + @"BNET\Orders\SpotOrders.json";
-        public static readonly string storedMarginOrders = Static.SystemDrive + @"BNET\Orders\MarginOrders.json";
-        public static readonly string storedIsolatedOrders = Static.SystemDrive + @"BNET\Orders\IsolatedOrders.json";
+        public static BinanceExchangeInfo? ExchangeInfo { get; set; }
 
-        public static BinanceExchangeInfo ExchangeInfo { get; set; }
+        public static List<OrderBase> ToS { get; set; } = new();
+        public static List<OrderBase> ToM { get; set; } = new();
+        public static List<OrderBase> ToI { get; set; } = new();
 
-        public static ObservableCollection<OrderBase> ToS { get; set; }
-        public static ObservableCollection<OrderBase> ToM { get; set; }
-        public static ObservableCollection<OrderBase> ToI { get; set; }
-        public static ObservableCollection<OrderBase> TempOrders { get; set; } = null;
+        public static ObservableCollection<SavedQuote> Quotes { get; set; } = new();
     }
 }

@@ -1,21 +1,35 @@
-﻿<!--******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************-->
+﻿<!--
+    *
+    *MIT License
+    *
+    *Copyright (c) 2022 S Christison
+    *
+    *Permission is hereby granted, free of charge, to any person obtaining a copy
+    *of this software and associated documentation files (the "Software"), to deal
+    *in the Software without restriction, including without limitation the rights
+    *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    *copies of the Software, and to permit persons to whom the Software is
+    *furnished to do so, subject to the following conditions:
+    *
+    *The above copyright notice and this permission notice shall be included in all
+    *copies or substantial portions of the Software.
+    *
+    *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    *SOFTWARE.
+    *
+-->
 
 <UserControl
-    x:Class="BTNET.Controls.MainViewControl"
+    x:Class="BTNET.VM.Controls.MainViewControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:BTNET.Controls"
-    xmlns:converters="clr-namespace:BTNET.Converters"
+    xmlns:controls="clr-namespace:BTNET.VM.Controls"
+    xmlns:converters="clr-namespace:BTNET.BV.Converters"
     xmlns:wpf="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
     Name="SymbolControl"
     AllowDrop="False"
@@ -23,52 +37,41 @@
     ScrollViewer.CanContentScroll="True">
 
     <UserControl.Resources>
-        <converters:WidthConverter x:Key="WidthConvert" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <converters:NumericFieldConverter x:Key="converter" />
     </UserControl.Resources>
 
-    <Grid Background="Black">
-
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="170" />
-            <ColumnDefinition Width="625*" />
-        </Grid.ColumnDefinitions>
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="600" />
-            <RowDefinition Height="3" />
             <RowDefinition />
+            <RowDefinition Height="5" />
+            <RowDefinition
+                Height="{Binding MainVM.OrderPositionReset, Mode=TwoWay}"
+                MinHeight="15.5"
+                MaxHeight="{Binding MainVM.ListViewControlMaxHeight}" />
         </Grid.RowDefinitions>
-
         <wpf:ChromiumWebBrowser
             x:Name="Browser"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Margin="0,0,0,0"
+            Grid.RowSpan="{Binding SettingsVM.StretchBrowser}"
             Address="{Binding MainVM.Chart}" />
-
         <GridSplitter
             Grid.Row="1"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Height="4"
-            Margin="0.0,0,0,0"
+            Height="5"
+            Margin="0,1,0,0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource MenuPopupBrush}" />
+            Background="{DynamicResource MenuPopupBrush}"
+            DragDelta="GridSplitter_DragDelta"
+            Opacity="{Binding SettingsVM.OrderOpacity}" />
+        <controls:ListViewControl
+            Grid.Row="2"
+            Grid.RowSpan="2"
+            Background="Black"
+            Opacity="{Binding SettingsVM.OrderOpacity}" />
+       
+        <StackPanel Orientation="Horizontal">
+            <controls:TabControl Grid.Row="0" Grid.RowSpan="2" />
+        </StackPanel>
 
-        <controls:ListViewControl Grid.Row="2" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" />
-
-        <StackPanel
-            Grid.Row="0"
-            Grid.RowSpan="1"
-            Grid.Column="1"
-            Width="140"
-            Height="20"
-            Margin="230,0,0,43"
-            VerticalAlignment="Bottom" />
-
-        <controls:TabControl Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" />
-
-        <controls:CanvasControl Grid.Row="0"  Grid.RowSpan="2" Grid.Column="1" />
+        <controls:CanvasControl Grid.Row="0" Grid.RowSpan="2" />
     </Grid>
 </UserControl>

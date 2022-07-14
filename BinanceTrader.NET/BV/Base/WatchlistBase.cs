@@ -1,102 +1,198 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using BinanceAPI;
 using BTNET.BVVM;
-using ExchangeAPI.Sockets;
+using BTNET.BVVM.BT;
+using BTNET.BVVM.BT.Args;
+using BTNET.BVVM.Log;
 using System;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class WatchlistItem : ObservableObject
     {
-        private string watchlistSymbol;
+        private string? watchlistSymbol;
+        private decimal watchlistPrice;
+        private decimal watchListBid;
+        private decimal watchlistAsk;
+        private decimal watchlistHigh;
+        private decimal watchlistLow;
+        private decimal watchlistClose;
+        private decimal watchlistChange;
+        private decimal watchlistVolume;
+        private int tickerStatus;
 
-        private decimal watchlistPrice, watchListBid, watchlistAsk, watchlistHigh, watchlistLow, watchlistClose, watchlistChange, watchlistVolume;
+        public WatchlistItem(string watchlistSymbol)
+        {
+            WatchlistSymbol = watchlistSymbol;
+        }
 
-        public string WatchlistSymbol
-        { get => watchlistSymbol; set { watchlistSymbol = value; PC(); } }
+        public string? WatchlistSymbol
+        {
+            get => watchlistSymbol;
+            set
+            {
+                watchlistSymbol = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistPrice
-        { get => watchlistPrice; set { watchlistPrice = value; PC(); } }
+        {
+            get => watchlistPrice;
+            set
+            {
+                watchlistPrice = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistBidPrice
-        { get => watchListBid; set { watchListBid = value; PC(); } }
+        {
+            get => watchListBid;
+            set
+            {
+                watchListBid = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistAskPrice
-        { get => watchlistAsk; set { watchlistAsk = value; PC(); } }
+        {
+            get => watchlistAsk;
+            set
+            {
+                watchlistAsk = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistHigh
-        { get => watchlistHigh; set { watchlistHigh = value; PC(); } }
+        {
+            get => watchlistHigh;
+            set
+            {
+                watchlistHigh = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistLow
-        { get => watchlistLow; set { watchlistLow = value; PC(); } }
+        {
+            get => watchlistLow;
+            set
+            {
+                watchlistLow = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistClose
-        { get => watchlistClose; set { watchlistClose = value; PC(); } }
+        {
+            get => watchlistClose;
+            set
+            {
+                watchlistClose = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistChange
-        { get => watchlistChange; set { watchlistChange = value; PC(); } }
+        {
+            get => watchlistChange;
+            set
+            {
+                watchlistChange = value;
+                PC();
+            }
+        }
 
         public decimal WatchlistVolume
-        { get => watchlistVolume; set { watchlistVolume = value; PC(); } }
-
-        /// <summary>
-        /// The UpdateSubscription for this WatchlistItem
-        /// </summary>
-        private UpdateSubscription WatchlistSymbolTickerUpdateSubscription = null;
-
-        /// <summary>
-        /// Unsubscribes from the Real Time Websocket Updates for the WatchlistSymbol in this WatchlistItem
-        /// </summary>
-        public void UnsubscribeWatchListItemSocket()
         {
-            BinanceSocketClient unsub = new BinanceSocketClient();
-            if (this.WatchlistSymbolTickerUpdateSubscription != null)
+            get => watchlistVolume;
+            set
             {
-                var result = unsub.UnsubscribeAsync(this.WatchlistSymbolTickerUpdateSubscription);
+                watchlistVolume = value;
+                PC();
             }
         }
 
-        /// <summary>
-        /// Subscribes to the Real Time Websocket Updates for the WatchlistSymbol in this WatchlistItem
-        /// </summary>
+        public int TickerStatus
+        {
+            get => tickerStatus;
+            set
+            {
+                tickerStatus = value;
+                PC();
+                PC("Status");
+            }
+        }
+
+        public ImageSource Status
+        {
+            get
+            {
+                switch (TickerStatus)
+                {
+                    case Ticker.CONNECTED:
+                        return new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Connection/connection-status-connected.png"));
+
+                    case Ticker.CONNECTING:
+                        return new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Connection/connection-status-connecting.png"));
+
+                    default:
+                        return new BitmapImage(new Uri("pack://application:,,,/BV/Resources/Connection/connection-status-disconnected.png"));
+                }
+            }
+        }
+
         public void SubscribeWatchListItemSocket()
         {
-            BinanceSocketClient socketClientTicker = new BinanceSocketClient();
+            var ticker = Tickers.AddTicker(WatchlistSymbol!);
 
-            if (this.WatchlistSymbolTickerUpdateSubscription != null)
+            if (ticker != null)
             {
-                WriteLog.Info("WatchlistItem is already running");
-                return;
+                ticker.TickerUpdated += TickerUpdated;
+                ticker.StatusChanged += TickerStatusChanged;
             }
-
-            var SymbolUpdateSubscription = socketClientTicker.Spot.SubscribeToBookTickerUpdatesAsync(WatchlistSymbol, data =>
+            else
             {
-                try
-                {
-                    WatchlistAskPrice = data.Data.BestAskPrice;
-                    WatchlistBidPrice = data.Data.BestBidPrice;
-                }
-                catch (Exception ex)
-                {
-                    WriteLog.Error(WatchlistSymbol + " | WatchlistItem: Real Time Symbol Ticker Exception: ", ex);
-                }
-            });
-
-            this.WatchlistSymbolTickerUpdateSubscription = SymbolUpdateSubscription.Result.Data;
+                WriteLog.Error("Failed to subscribe: " + WatchlistSymbol!);
+            }
         }
 
-        public WatchlistItem()
-        { }
+        public void TickerUpdated(object sender, TickerResultEventArgs e)
+        {
+            WatchlistAskPrice = e.BestAsk;
+            WatchlistBidPrice = e.BestBid;
+        }
+
+        public void TickerStatusChanged(object sender, StatusChangedEventArgs e)
+        {
+            TickerStatus = e.TickerStatus;
+        }
     }
 }

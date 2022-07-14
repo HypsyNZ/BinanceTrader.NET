@@ -1,86 +1,54 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using BinanceAPI.Objects.Spot.MarketData;
-using BTNET.BVVM;
-
-namespace BTNET.Base
+namespace BTNET.BV.Base
 {
     public class ChartBase
     {
-        private string symbol;
-        private string symbolLeft;
-        private string symbolRight;
-        private string symbolMergeOne;
-        private string symbolMergeTwo;
-
         /// <summary>
         /// Currently Selected Symbol | ex: BTCUSDT
         /// </summary>
-        public string Symbol { get => symbol; set => symbol = value; }
+        public string? Symbol { get; set; }
 
         /// <summary>
         /// Currently Selected Symbol Base Asset | ex: BTC
         /// </summary>
-        public string SymbolLeft { get => symbolLeft; set => symbolLeft = value; }
+        public string? SymbolLeft { get; set; }
 
         /// <summary>
         /// Currently Selected Symbol Quote Asset | ex: USDT
         /// </summary>
-        public string SymbolRight { get => symbolRight; set => symbolRight = value; }
+        public string? SymbolRight { get; set; }
 
         /// <summary>
         /// Currently Selected Symbol - Split | ex: BTC-USDT
         /// </summary>
-        public string SymbolMergeOne { get => symbolMergeOne; set => symbolMergeOne = value; }
+        public string? SymbolMergeOne { get; set; }
 
         /// <summary>
         /// Currently Selected Symbol _ Split | ex: BTC_USDT
         /// </summary>
-        public string SymbolMergeTwo { get => symbolMergeTwo; set => symbolMergeTwo = value; }
-
-        /// <summary>
-        /// Returns common names that can be used for Chart Links
-        /// </summary>
-        /// <param name="binanceExchangeInfo">BinanceExchangeInfo</param>
-        /// <param name="symbol">Currently Selected Symbol</param>
-        /// <returns>SymbolMergeOne // BTC-USDT || SymbolMergeTwo // BTC_USDT  </returns>
-        public static ChartBase ExchangeInfoSplit(BinanceExchangeInfo binanceExchangeInfo, string symbol)
-        {
-            ChartBase cb = new();
-            foreach (var exchangeInfo in binanceExchangeInfo.Symbols)
-            {
-                if (exchangeInfo.Name == symbol)
-                {
-                    cb.symbol = exchangeInfo.Name;
-                    cb.symbolLeft = exchangeInfo.BaseAsset;
-                    cb.symbolRight = exchangeInfo.QuoteAsset;
-                    cb.SymbolMergeOne = exchangeInfo.BaseAsset + "-" + exchangeInfo.QuoteAsset;
-                    cb.SymbolMergeTwo = exchangeInfo.BaseAsset + "_" + exchangeInfo.QuoteAsset;
-                    WriteLog.Info("Returning ExchangeInformation for Symbol: " + cb.symbol + "| Left: " + cb.symbolLeft + "| Right: " + cb.symbolRight + "| MergOne: " + cb.SymbolMergeOne + "| MergeTwo: " + cb.SymbolMergeTwo);
-                    return cb;
-                }
-            }
-            WriteLog.Error("Couldn't find Exchange Information for Symbol, This probably indicates a deeper issue");
-            return null;
-        }
-
-        public ChartBase()
-        {
-            this.Symbol = symbol; // BTCUSDT
-            this.SymbolLeft = symbolLeft; // BTC
-            this.SymbolRight = symbolRight; // USDT
-            this.SymbolMergeOne = SymbolMergeOne; // BTC-USDT
-            this.SymbolMergeTwo = SymbolMergeTwo; // BTC_USDT
-        }
+        public string? SymbolMergeTwo { get; set; }
     }
 }

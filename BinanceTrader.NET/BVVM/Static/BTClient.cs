@@ -1,45 +1,57 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
-using BinanceAPI;
+using BinanceAPI.ClientHosts;
+using System.Threading;
 
 namespace BTNET.BVVM
 {
-    internal class BTClient : ObservableObject
+    public class BTClient
     {
-        private static BinanceClient local = new();
-        private static BinanceSocketClient socketClient = new();
-        private static BinanceSocketClient socketSymbolTicker = new();
+        public SocketClientHost SocketWatchlistTicker { get; set; }
+        public SocketClientHost SocketSymbolTicker { get; set; }
+        public SocketClientHost SocketClient { get; set; }
+        public BinanceClientHost Local { get; set; }
 
-        public static BinanceSocketClient SocketSymbolTicker { get => socketSymbolTicker; set => socketSymbolTicker = value; }
-        public static BinanceSocketClient SocketClient { get => socketClient; set => socketClient = value; }
-        public static BinanceClient Local { get => local; set => local = value; }
-
-        public static void DisposeClients()
+        public BTClient(CancellationToken waitToken = default)
         {
-            if (SocketClient != null)
-            {
-                _ = SocketClient.UnsubscribeAllAsync();
-            }
+            Local = new(waitToken);
+            SocketWatchlistTicker = new();
+            SocketSymbolTicker = new();
+            SocketClient = new();
+        }
 
-            if (SocketSymbolTicker != null)
-            {
-                _ = SocketSymbolTicker.UnsubscribeAllAsync();
-            }
+        public void DisposeClients()
+        {
+            _ = SocketClient?.UnsubscribeAllAsync();
+            _ = SocketSymbolTicker?.UnsubscribeAllAsync();
+            _ = SocketWatchlistTicker?.UnsubscribeAllAsync();
 
-            if (Local != null)
-            {
-                Local.Dispose();
-            }
+            Local?.Dispose();
+            SocketClient?.Dispose();
+            SocketSymbolTicker?.Dispose();
+            SocketWatchlistTicker?.Dispose();
         }
     }
 }

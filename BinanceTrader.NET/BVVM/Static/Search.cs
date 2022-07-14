@@ -1,59 +1,118 @@
-﻿using BinanceAPI.Enums;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI;
+using BinanceAPI.Enums;
+using BinanceAPI.Objects.Spot.MarketData;
 using BTNET.BV.Enum;
-using BTNET.BVVM.HELPERS;
-using BTNET.ViewModels;
-using System;
-using System.Collections.Generic;
+using BTNET.BVVM.BT;
+using BTNET.BVVM.Helpers;
+using BTNET.VM.ViewModels;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace BTNET.BVVM
 {
     internal class Search : ObservableObject
     {
-        public static async Task<bool> SearchPricesUpdate()
+        private static bool ShouldDestroy(BinanceSymbol test)
         {
-            var result = await BTClient.Local.Spot.Market.GetPricesAsync().ConfigureAwait(false);
-            if (result.Success)
+            switch (test.Status)
             {
-                var prices = result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, ConvertBySats.ConvertDecimal(r.Price, r.Symbol, Stored.ExchangeInfo)));
+                case SymbolStatus.Close:
+                case SymbolStatus.Break:
+                    return true;
 
-                Static.AllPrices = new ObservableCollection<BinanceSymbolViewModel>(prices);
-                Static.AllPricesFiltered = new ObservableCollection<BinanceSymbolViewModel>(prices);
+                default:
 
-                foreach (var ExSymbol in Stored.ExchangeInfo.Symbols)
-                {
-                    var temp = Static.AllPricesFiltered.SingleOrDefault(o => o.SymbolView.Symbol == ExSymbol.Name);
-                    if (temp != null)
+                    if (Static.CurrentTradingMode == TradingMode.Spot)
                     {
-                        if (ExSymbol.Status == SymbolStatus.Close || ExSymbol.Status == SymbolStatus.Break)
+                        if (!test.IsSpotTradingAllowed)
                         {
-                            _ = Static.AllPricesFiltered.Remove(temp);
-                        }
-                        else
-                        if (Static.CurrentTradingMode == TradingMode.Spot)
-                        {
-                            if (ExSymbol.IsSpotTradingAllowed == false)
-                            {
-                                _ = Static.AllPricesFiltered.Remove(temp);
-                            }
-                        }
-                        else if (ExSymbol.IsMarginTradingAllowed == false)
-                        {
-                            _ = Static.AllPricesFiltered.Remove(temp);
+                            return true;
                         }
                     }
-                }
+                    else
+                    {
+                        if (!test.IsMarginTradingAllowed)
+                        {
+                            return true;
+                        }
+                    }
 
-                MainVM.AllSymbolsOnUI = Static.AllPricesFiltered;
-                WriteLog.Info("Filtered Search: " + (Static.CurrentTradingMode == TradingMode.Spot ? "All Tradable Coins" : (Static.CurrentTradingMode == TradingMode.Margin || Static.CurrentTradingMode == TradingMode.Isolated) ? "Margin/Isolated" : "Unknown"));
+                    break;
             }
-            else
+
+            return false;
+        }
+
+        public static async Task<bool> SearchPricesUpdateAsync()
+        {
+            var result = await Client.Local.Spot.Market.GetPricesAsync().ConfigureAwait(false);
+            var ex = Static.ManageExchangeInfo.GetStoredExchangeInfo;
+            var allSymbols = Static.AllPrices.ToList();
+
+            if (result != null && ex != null)
             {
-                _ = Static.MessageBox.ShowMessage($"Error requesting All Price data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Invoke.InvokeUI(() =>
+                {
+                    if (result.Success)
+                    {
+                        var prices = result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, r.Price.Normalize()));
+                        Static.AllPricesUnfiltered = new ObservableCollection<BinanceSymbolViewModel>(prices);
+                        foreach (var pr in prices)
+                        {
+                            BinanceSymbolViewModel f = allSymbols.SingleOrDefault(allSymbols => allSymbols.SymbolView.Symbol == pr.SymbolView.Symbol);
+                            if (f != null)
+                            {
+                                BinanceSymbol exSymbol = ex.Symbols.Where(exsym => exsym.Name == f.SymbolView.Symbol).FirstOrDefault();
+                                if (ShouldDestroy(exSymbol))
+                                {
+                                    allSymbols.Remove(f);
+                                }
+                            }
+                            else
+                            {
+                                BinanceSymbol exSymbol = ex.Symbols.Where(exsym => exsym.Name == pr.SymbolView.Symbol).FirstOrDefault();
+                                if (!ShouldDestroy(exSymbol))
+                                {
+                                    allSymbols.Add(pr);
+                                }
+                            }
+                        }
+
+                        Static.AllPrices = new ObservableCollection<BinanceSymbolViewModel>(allSymbols);
+                        MainVM.AllSymbolsOnUI = Static.AllPrices;
+                        WatchMan.SearchPrices.SetWorking();
+                    }
+                    else
+                    {
+                        WatchMan.SearchPrices.SetError();
+                        _ = Message.ShowBox($"Error requesting All Price data: {result.Error!.Message}", "error");
+                    }
+                });
             }
 
             return true;

@@ -1,61 +1,78 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 using BTNET.BVVM;
 
-namespace BTNET.ViewModels
+namespace BTNET.VM.ViewModels
 {
     public class QuoteViewModel : ObservableObject
     {
-        public QuoteViewModel()
-        {
-        }
+        private decimal tradeAmountbuy;
 
-        private decimal tradeAmountbuy; public decimal TradeAmountBuy
+        public decimal TradeAmountBuy
         {
             get => this.tradeAmountbuy;
             set
             {
-                this.tradeAmountbuy = value; PC();
+                this.tradeAmountbuy = value;
+                PC();
             }
         }
 
-        private decimal tradeAmountsell; public decimal TradeAmountSell
+        private decimal tradeAmountsell;
+
+        public decimal TradeAmountSell
         {
             get => this.tradeAmountsell;
             set
             {
-                this.tradeAmountsell = value; PC();
+                this.tradeAmountsell = value;
+                PC();
             }
         }
 
-        private decimal tradePrice; public decimal TradePrice
-        { get => this.tradePrice; set { this.tradePrice = value; PC(); } }
+        private decimal observeQuoteBuy;
 
-        private decimal observeQuoteBuy; public decimal ObserveQuoteOrderQuantityLocalBuy
+        public decimal ObserveQuoteOrderQuantityLocalBuy
         {
             get => this.observeQuoteBuy;
             set
             {
-                this.observeQuoteBuy = value; PC();
+                this.observeQuoteBuy = value;
+                PC();
             }
         }
 
-        private decimal observeQuoteSell; public decimal ObserveQuoteOrderQuantityLocalSell
+        private decimal observeQuoteSell;
+
+        public decimal ObserveQuoteOrderQuantityLocalSell
         {
             get => this.observeQuoteSell;
             set
             {
-                this.observeQuoteSell = value; PC();
+                this.observeQuoteSell = value;
+                PC();
             }
         }
     }

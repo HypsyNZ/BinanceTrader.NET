@@ -1,0 +1,52 @@
+name: Build Test
+
+on:
+  push:
+    branches: [ main, preview, experimental ]
+  pull_request:
+    branches: [ main, preview, experimental ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Release]
+    runs-on: windows-latest
+    env:
+      Solution_Path: BinanceTrader.NET.sln
+      Wpf_Project_Path: BinanceTrader.NET\BinanceTrader.NET.csproj
+      Actions_Allow_Unsecure_Commands: true
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: "6.0.x"
+    # Add MsBuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.1
+    # Restore the application
+    - name:  Restore the Wpf application to populate the obj folder
+      run: msbuild ${{ env.Solution_Path }} /t:Restore /p:Configuration=$env:Configuration /p:RuntimeIdentifier=$env:RuntimeIdentifier
+      env:
+        Configuration: Release
+        RuntimeIdentifier: win-x64
+    # Build and create MSIX package
+    - name: Build Binance Trader
+      run: msbuild ${{ env.Solution_Path }} /p:Platform=$env:TargetPlatform /p:RuntimeIdentifier=$env:RuntimeIdentifier /p:Configuration=$env:Configuration /p:AppxBundlePlatforms=$env:Appx_Bundle_Platforms /p:UapAppxPackageBuildMode=$env:BuildMode /p:AppxBundle=$env:AppxBundle /p:AppxPackageDir="$env:AppxPackageDir" /p:GenerateAppxPackageOnBuild=$env:GenerateAppPackage /p:AppxPackageSigningEnabled=$env:SigningEnabled /p:PackageCertificateKeyFile=${{ env.Signing_Certificate }} /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      env:
+        AppxBundle: Never
+        BuildMode: SideloadOnly
+        AppxPackageDir: ${{ env.GITHUB_ACTION_PATH }}\${{ env.App_Packages_Directory }}
+        Configuration: Release
+        TargetPlatform: x64
+        RuntimeIdentifier: win-x64
+        AppxBundlePlatforms: x86|x64|arm|arm64
+        SigningEnabled: false
+        GenerateAppPackage: false

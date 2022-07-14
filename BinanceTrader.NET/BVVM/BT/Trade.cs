@@ -1,57 +1,77 @@
-﻿//******************************************************************************************************
-//  Copyright © 2022, S. Christison. No Rights Reserved.
-//
-//  Licensed to [You] under one or more License Agreements.
-//
-//      http://www.opensource.org/licenses/MIT
-//
-//  Unless agreed to in writing, the subject software distributed under the License is distributed on an
-//  "AS-IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-//******************************************************************************************************
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 using BinanceAPI.Enums;
 using BTNET.BV.Enum;
-using BTNET.ViewModels;
-using ExchangeAPI.Objects;
+using BTNET.BVVM.Log;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace BTNET.BVVM.BT
 {
     internal class Trade : ObservableObject
     {
-        public static void Buy(TradeViewModel TP, BorrowViewModel BVM)
+        private const string FAILED = "Failed";
+
+        public static void Buy()
         {
-            if (Static.CurrentlySelectedSymbolTab != SelectedTab.Buy)
+            if (Static.CurrentlySelectedSymbolTab != SelectedTab.Buy || Static.SelectedSymbolViewModel == null)
             {
-                MiniLog.AddLine("Fatal Error!!");
-                _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                WriteLog.Error("Fatal Error in UI");
+                _ = Message.ShowBox($"Restart Binance Trader", FAILED);
                 return;
             }
 
-            PlaceOrder(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, TP.OrderQuantity, TP.SymbolPrice, Static.CurrentTradingMode, BVM.BorrowBuy, OrderSide.Buy, TP.UseLimitBuyBool);
+            _ = PlaceOrderAsync(Static.SelectedSymbolViewModel.SymbolView.Symbol, TradeVM.OrderQuantity,
+                TradeVM.SymbolPriceBuy, Static.CurrentTradingMode, BorrowVM.BorrowBuy, OrderSide.Buy, TradeVM.UseLimitBuyBool);
         }
 
-        public static void Sell(TradeViewModel TP, BorrowViewModel BVM)
+        public static void Sell()
         {
-            if (Static.CurrentlySelectedSymbolTab != SelectedTab.Sell)
+            if (Static.CurrentlySelectedSymbolTab != SelectedTab.Sell || Static.SelectedSymbolViewModel == null)
             {
-                MiniLog.AddLine("Fatal Error!!");
-                _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                WriteLog.Error("Fatal Error in UI");
+                _ = Message.ShowBox($"Restart Binance Trader", FAILED);
                 return;
             }
 
-            PlaceOrder(Static.GetCurrentlySelectedSymbol.SymbolView.Symbol, TP.OrderQuantity, TP.SymbolPrice, Static.CurrentTradingMode, BVM.BorrowSell, OrderSide.Sell, TP.UseLimitSellBool);
+            _ = PlaceOrderAsync(Static.SelectedSymbolViewModel.SymbolView.Symbol, TradeVM.OrderQuantity,
+                TradeVM.SymbolPriceSell, Static.CurrentTradingMode, BorrowVM.BorrowSell, OrderSide.Sell, TradeVM.UseLimitSellBool);
         }
 
-        public static Task PlaceOrder(string symbol, decimal quantity, decimal price, TradingMode tradingmode, bool borrow, OrderSide side, bool useLimit = false)
+        public static async Task PlaceOrderAsync(string? symbol, decimal quantity, decimal price, TradingMode tradingmode, bool borrow, OrderSide side, bool useLimit = false)
         {
+            if (symbol == null)
+            {
+                _ = Message.ShowBox($"Order placing failed: Internal Error, Please Restart Binance Trader", FAILED);
+                return;
+            }
+
 #if DEBUG || DEBUG_SLOW
 
             OrderType type = useLimit ? OrderType.Limit : OrderType.Market;
             decimal? usePrice = type == OrderType.Limit ? price : null;
-
+            await Task.Delay(1);
             WriteLog.Info(
                 "TEST ORDER: Symbol :" + symbol +
                 " | OrderQuantity :" + quantity +
@@ -61,54 +81,72 @@ namespace BTNET.BVVM.BT
                 " | Type: " + type +
                 " | Side: " + side +
                 " | usePrice: " + usePrice +
-                " | SelectedTab :" + (Static.CurrentlySelectedSymbolTab == SelectedTab.Buy ? "Buy" : Static.CurrentlySelectedSymbolTab == SelectedTab.Sell ? "Sell" : Static.CurrentlySelectedSymbolTab == SelectedTab.Settle ? "Settle" : Static.CurrentlySelectedSymbolTab == SelectedTab.Error ? "Mode" : "Error") +
-                " | SelectedTradingMode :" + (Static.CurrentTradingMode == TradingMode.Spot ? " Spot" : Static.CurrentTradingMode == TradingMode.Margin ? " Margin" : Static.CurrentTradingMode == TradingMode.Isolated ? " Isolated" : " Error")
+                " | SelectedTab :" + (Static.CurrentlySelectedSymbolTab == SelectedTab.Buy ? "Buy"
+                : Static.CurrentlySelectedSymbolTab == SelectedTab.Sell ? "Sell"
+                : Static.CurrentlySelectedSymbolTab == SelectedTab.Settle ? "Settle"
+                : Static.CurrentlySelectedSymbolTab == SelectedTab.Error ? "Mode" : "Error") +
+                " | SelectedTradingMode :" + (Static.CurrentTradingMode == TradingMode.Spot ? " Spot"
+                : Static.CurrentTradingMode == TradingMode.Margin ? " Margin"
+                : Static.CurrentTradingMode == TradingMode.Isolated ? " Isolated"
+                : " Error")
             );
-            return Task.CompletedTask;
+            return;
 
 #else
 
             if (quantity == 0 || price == 0)
             {
-                MiniLog.AddLine("Fatal Error!!");
-                _ = Static.MessageBox.ShowMessage($"Restart Binance Trader", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-                return Task.CompletedTask;
+                _ = Message.ShowBox($"Restart Binance Trader", FAILED);
+                return;
             }
 
             OrderType type = useLimit ? OrderType.Limit : OrderType.Market;
             decimal? usePrice = type == OrderType.Limit ? price : null;
             TimeInForce? tif = type == OrderType.Limit ? TimeInForce.GoodTillCancel : null;
 
-            _ = Task.Run(async () =>
+            await Task.Run(async () =>
             {
-                Task<WebCallResult<BinanceAPI.Objects.Spot.SpotData.BinancePlacedOrder>> result = null;
-
-                result = tradingmode switch
+                var result = tradingmode switch
                 {
-                    TradingMode.Spot => BTClient.Local.Spot.Order.PlaceOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 1000, timeInForce: tif),
-                    TradingMode.Margin => !borrow
-                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 1000, timeInForce: tif)
-                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 1000, timeInForce: tif),
-                    TradingMode.Isolated => !borrow
-                    ? BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, receiveWindow: 1000, timeInForce: tif)
-                    : BTClient.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true, sideEffectType: SideEffectType.MarginBuy, receiveWindow: 1000, timeInForce: tif),
+                    TradingMode.Spot =>
+                    await Client.Local.Spot.Order.PlaceOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, receiveWindow: 3000, timeInForce: tif),
+
+                    TradingMode.Margin =>
+                    !borrow ? await Client.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity,
+                    price: usePrice, receiveWindow: 3000, timeInForce: tif)
+
+                    : await Client.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice,
+                    sideEffectType: SideEffectType.MarginBuy, receiveWindow: 3000, timeInForce: tif),
+
+                    TradingMode.Isolated =>
+                    !borrow ? await Client.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity,
+                    price: usePrice, isIsolated: true, receiveWindow: 3000, timeInForce: tif)
+
+                    : await Client.Local.Margin.Order.PlaceMarginOrderAsync(symbol, side, type, quantity: quantity, price: usePrice, isIsolated: true,
+                    sideEffectType: SideEffectType.MarginBuy, receiveWindow: 3000, timeInForce: tif),
                     _ => null,
                 };
 
-                await result;
-
-                if (result.Result.Success)
+                if (result != null)
                 {
-                    MiniLog.AddLine("Order Placed!");
+                    if (result.Success)
+                    {
+                        WriteLog.Info("Order Placed!: Symbol :" + symbol +
+                            " | OrderQuantity :" + quantity +
+                            " | SymbolPrice :" + price +
+                            " | Type: " + type +
+                            " | Side: " + side);
+                    }
+                    else
+                    {
+                        _ = Message.ShowBox($"Order placing failed: {result.Error?.Message}", FAILED);
+                    }
                 }
                 else
                 {
-                    MiniLog.AddLine("Order Failed!");
-                    _ = Static.MessageBox.ShowMessage($"Order placing failed: {result.Result.Error.Message}", "Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _ = Message.ShowBox($"Order placing failed: Internal Error, Please Restart Binance Trader", FAILED);
                 }
             }).ConfigureAwait(false);
-
-            return Task.CompletedTask;
 #endif
         }
     }
