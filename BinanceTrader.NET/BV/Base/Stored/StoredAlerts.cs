@@ -48,7 +48,7 @@ namespace BTNET.BV.Base
                 if (alerts != null)
                 {
                     WriteLog.Info("Loaded [" + alerts.Count() + "] Alerts from file");
-                    Invoke.InvokeUI(() =>
+                    InvokeUI.CheckAccess(() =>
                     {
                         foreach (var alert in alerts)
                         {

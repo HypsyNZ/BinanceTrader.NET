@@ -89,7 +89,7 @@ namespace BTNET.BVVM
             {
                 if (Static.DeletedList != null && Static.DeletedList.Contains(r.OrderId))
                 {
-                    Invoke.InvokeUI(() =>
+                    InvokeUI.CheckAccess(() =>
                     {
                         if (r.Helper != null)
                         {

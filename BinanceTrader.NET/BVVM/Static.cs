@@ -50,6 +50,7 @@ namespace BTNET.BVVM
 
         public static ObservableCollection<BinanceSymbolViewModel> AllPrices { get; set; } = new();
         public static ObservableCollection<BinanceSymbolViewModel> AllPricesUnfiltered { get; set; } = new();
+
         public static List<long> DeletedList { get; set; } = new List<long>();
         public static List<long> SettledOrders { get; set; } = new List<long>();
 

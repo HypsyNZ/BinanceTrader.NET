@@ -23,6 +23,7 @@
 */
 
 using BTNET.BVVM.BT;
+using BTNET.BVVM.Helpers;
 using BTNET.BVVM.Log;
 using System;
 using System.Threading.Tasks;
@@ -74,7 +75,15 @@ namespace BTNET.BVVM
 
         public static async Task ExchangeInfoAllPricesAsync()
         {
+            InvokeUI.CheckAccess(() =>
+            {
+                MainVM.SymbolSelectionHitTest = false;
+                MainVM.SearchEnabled = false;
+            });
+
             await ExchangeInformationAsync().ConfigureAwait(false);
+
+            await MarginPairs.AllMarginPairInformation().ConfigureAwait(false);
 
             await Search.SearchPricesUpdateAsync().ConfigureAwait(false);
         }

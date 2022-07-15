@@ -73,7 +73,7 @@ namespace BTNET.VM.ViewModels
         private bool isMargin;
         private bool isWatchlistStillLoading;
         private bool isCurrentlyLoading;
-        private bool shouldSuspendSymbolSelection = true;
+        private bool symbolSelectionHitTest = true;
         private bool alertsReady = true;
 
         private double listViewControlMaxHeight = ORDER_PANEL_HEIGHT_RESET;
@@ -173,12 +173,12 @@ namespace BTNET.VM.ViewModels
             }
         }
 
-        public bool ShouldSuspendSymbolSelection
+        public bool SymbolSelectionHitTest
         {
-            get => shouldSuspendSymbolSelection;
+            get => symbolSelectionHitTest;
             set
             {
-                shouldSuspendSymbolSelection = value;
+                symbolSelectionHitTest = value;
                 PC();
             }
         }
@@ -400,7 +400,7 @@ namespace BTNET.VM.ViewModels
                 {
                     try
                     {
-                        Invoke.InvokeUI(() =>
+                        InvokeUI.CheckAccess(() =>
                         {
                             CefSharp.Cef.ShutdownWithoutChecks();
                         });
@@ -738,7 +738,7 @@ namespace BTNET.VM.ViewModels
 
         public Task ResetListViewMaxHeightAsync()
         {
-            Invoke.InvokeUI(() =>
+            InvokeUI.CheckAccess(() =>
             {
                 var d = App.Current.MainWindow.ActualHeight - ListViewControlHeightOffset;
                 switch (d)

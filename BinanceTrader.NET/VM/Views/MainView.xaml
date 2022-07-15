@@ -321,7 +321,7 @@
             BorderThickness="0"
             Foreground="Black"
             GridViewColumnHeader.Click="SortableListViewColumnHeaderClicked"
-            IsHitTestVisible="{Binding MainVM.ShouldSuspendSymbolSelection}"
+            IsHitTestVisible="{Binding MainVM.SymbolSelectionHitTest}"
             ItemsSource="{Binding MainVM.AllSymbolsOnUI}"
             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
             ScrollViewer.VerticalScrollBarVisibility="Hidden"

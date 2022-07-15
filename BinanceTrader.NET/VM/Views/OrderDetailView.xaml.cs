@@ -94,7 +94,7 @@ namespace BTNET.VM.Views
         {
             try
             {
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     CurrentOrder.Fulfilled = OrderHelper.Fulfilled(CurrentOrder.Quantity, CurrentOrder.QuantityFilled);
                     CurrentOrder.Pnl = decimal.Round(OrderHelper.PnL(CurrentOrder, e.BestAsk, e.BestBid), App.DEFAULT_ROUNDING_PLACES);

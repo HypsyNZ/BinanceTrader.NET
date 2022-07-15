@@ -131,7 +131,7 @@ namespace BTNET.BVVM
                 Settings.LoadSettingsAsync().ConfigureAwait(false);
                 Browser.ConfigureBrowserAsync();
 
-                App.ApplicationStarted += Started;
+                App.ApplicationStarted += OnStarted;
                 App.TradingModeChanged += OnChangeTradingMode;
                 App.SearchChanged += OnSearchUpdated;
                 App.SymbolChanged += OnChangeSymbol;
@@ -646,7 +646,12 @@ namespace BTNET.BVVM
                     {
                         // Update All Exchange Information and Search Prices
                         await Exchange.ExchangeInfoAllPricesAsync().ConfigureAwait(false);
-                        SymbolSearch = SymbolSearch; // Property Changed
+                        InvokeUI.CheckAccess(() =>
+                        {
+                            SymbolSearch = SymbolSearch; // Property Changed
+                            MainVM.SearchEnabled = true;
+                            MainVM.SymbolSelectionHitTest = true;
+                        });
 
                         // Update All Interest Rates
                         await InterestRate.GetAllInterestRatesAsync().ConfigureAwait(false);
@@ -717,12 +722,13 @@ namespace BTNET.BVVM
             MainVM.SellButtonEnabled = true;
         }
 
-        public void Started(object sender, EventArgs e)
+        public void OnStarted(object sender, EventArgs e)
         {
             IsStarted = true;
             MainVM.IsCurrentlyLoading = false;
             SettingsVM.CheckForUpdateCheckBoxEnabled = true;
             MainVM.SearchEnabled = true;
+            MainVM.SymbolSelectionHitTest = true;
             WriteLog.Info("Binance Trader Started Successfully after: [" + ((DateTime.UtcNow.Ticks - App.ClientLaunchTime.Ticks) / App.TEN_THOUSAND_TICKS) + "ms]");
         }
 
@@ -733,13 +739,13 @@ namespace BTNET.BVVM
             var loadquote = Stored.Quotes.Where(t => t.Symbol == CurrentlySelectedSymbol!.SymbolView.Symbol).FirstOrDefault();
             if (loadquote != null)
             {
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     QuoteVM.ObserveQuoteOrderQuantityLocalBuy = loadquote.QuantityBuy;
                     QuoteVM.ObserveQuoteOrderQuantityLocalSell = loadquote.QuantitySell;
                 });
 
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     if (TradeVM.UseLimitBuyBool)
                     {
@@ -759,7 +765,8 @@ namespace BTNET.BVVM
             if (CurrentlySelectedSymbol != null)
             {
                 MainVM.IsCurrentlyLoading = true;
-                MainVM.ShouldSuspendSymbolSelection = false;
+                MainVM.SymbolSelectionHitTest = false;
+
                 WriteLog.Info("Changing to Symbol: " + CurrentlySelectedSymbol.SymbolView.Symbol);
 
                 _ = Task.Run(async () =>
@@ -769,9 +776,12 @@ namespace BTNET.BVVM
                     {
                         await PaddingWidthAsync().ConfigureAwait(false);
 
-                        MainVM.IsSymbolSelected = true;
-                        MainVM.IsCurrentlyLoading = false;
-                        MainVM.ShouldSuspendSymbolSelection = true;
+                        InvokeUI.CheckAccess(() =>
+                        {
+                            MainVM.IsSymbolSelected = true;
+                            MainVM.IsCurrentlyLoading = false;
+                            MainVM.SymbolSelectionHitTest = true;
+                        });
 
                         _ = Orders.UpdateInterestRateAsync().ConfigureAwait(false);
                         _ = Orders.UpdateTradeFeeAsync().ConfigureAwait(false);
@@ -847,6 +857,7 @@ namespace BTNET.BVVM
             {
                 MainVM.IsCurrentlyLoading = true;
                 MainVM.SearchEnabled = false;
+                MainVM.SymbolSelectionHitTest = false;
 
                 if (MainVM.IsSymbolSelected)
                 {
@@ -860,8 +871,13 @@ namespace BTNET.BVVM
                     {
                         SymbolSearch = SymbolSearch;
                     }
-                    MainVM.SearchEnabled = true;
-                    MainVM.IsCurrentlyLoading = false;
+
+                    InvokeUI.CheckAccess(() =>
+                    {
+                        MainVM.SearchEnabled = true;
+                        MainVM.SymbolSelectionHitTest = true;
+                        MainVM.IsCurrentlyLoading = false;
+                    });
                 }).ConfigureAwait(false);
 
                 WriteLog.Info("Selected Mode: " + (CurrentTradingMode == TradingMode.Spot ? "Spot"
@@ -873,7 +889,7 @@ namespace BTNET.BVVM
 
         public void OnSearchUpdated(object sender, EventArgs args)
         {
-            Invoke.InvokeUI(() =>
+            InvokeUI.CheckAccess(() =>
             {
                 if (!string.IsNullOrWhiteSpace(SymbolSearch))
                 {

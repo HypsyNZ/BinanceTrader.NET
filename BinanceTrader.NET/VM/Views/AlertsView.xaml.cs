@@ -131,7 +131,7 @@ namespace BTNET.VM.Views
         private Task CloseSideMenuAsync()
         {
             var RealWidth = AlertListView.ActualWidth;
-            Invoke.InvokeUI(() =>
+            InvokeUI.CheckAccess(() =>
             {
                 var contents = AlertListView.View as GridView;
 
@@ -161,7 +161,7 @@ namespace BTNET.VM.Views
 
         private Task OpenSideMenuAsync()
         {
-            Invoke.InvokeUI(() =>
+            InvokeUI.CheckAccess(() =>
             {
                 var RealWidth = AlertListView.ActualWidth;
                 var contents = AlertListView.View as GridView;

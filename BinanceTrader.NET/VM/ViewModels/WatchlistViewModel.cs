@@ -133,7 +133,7 @@ namespace BTNET.VM.ViewModels
 
                 _ = Task.Run(() =>
                 {
-                    Invoke.InvokeUI(() =>
+                    InvokeUI.CheckAccess(() =>
                     {
                         foreach (var symbol in Static.AllPricesUnfiltered)
                         {
@@ -211,7 +211,7 @@ namespace BTNET.VM.ViewModels
                 WatchlistItem watchListItem = new WatchlistItem(Symbol);
                 watchListItem.SubscribeWatchListItemSocket();
 
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     WatchListItems.Add(watchListItem);
                     WatchListItems = new ObservableCollection<WatchlistItem>(WatchListItems.OrderByDescending(d => d.WatchlistSymbol));
@@ -234,7 +234,7 @@ namespace BTNET.VM.ViewModels
             {
                 Task.Run(() =>
                 {
-                    Invoke.InvokeUI(() =>
+                    InvokeUI.CheckAccess(() =>
                     {
                         WriteLog.Info("Removed Watchlist Symbol: " + watchlistItem.WatchlistSymbol);
                         WatchListItems.Remove(watchlistItem);

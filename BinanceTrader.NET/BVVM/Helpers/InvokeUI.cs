@@ -29,69 +29,68 @@ using System.Windows.Threading;
 
 namespace BTNET.BVVM.Helpers
 {
-    public static class Invoke
+    public static class InvokeUI
     {
-        public static void InvokeUI(Action action)
+        /// <summary>
+        /// Execute an Action in the Appropriate UI Thread
+        /// <para>Will Invoke the UI if you are not already in the Appropriate UI Thread</para>
+        /// <para>Runs Synchronously</para>
+        /// </summary>
+        /// <param name="action"></param>
+        public static void CheckAccess(Action action)
         {
             try
             {
-                Dispatcher? dispatcher = Application.Current?.Dispatcher;
-                if (dispatcher != null)
+                Dispatcher dispatcher = Application.Current.Dispatcher;
+
+                if (dispatcher.CheckAccess())
                 {
-                    if (dispatcher.CheckAccess())
+                    action();
+                    return;
+                }
+
+                dispatcher.Invoke(delegate
+                {
+                    try
                     {
                         action();
-                        return;
                     }
-
-                    dispatcher.Invoke(delegate
+                    catch (Exception ex)
                     {
-                        try
-                        {
-                            action();
-                        }
-                        catch (Exception ex)
-                        {
-                            WriteLog.Error("Invoke Error: ", ex);
-                        }
-                    });
-                }
+                        WriteLog.Error("Invoke Error: ", ex);
+                    }
+                });
             }
             catch
             {
-                // The Dispatcher might throw during closing
+                // The Dispatcher might throw here during closing and after the UI has already been disposed
             }
         }
 
-        public static void BeginInvokeUI(Action action)
+        /// <summary>
+        /// Execute an Action in the Appropriate UI Thread using the Scheduler
+        /// <para>Returns control to the UI Thread immediately</para>
+        /// </summary>
+        /// <param name="action"></param>
+        public static void Begin(Action action)
         {
             try
             {
-                Dispatcher? dispatcher = Application.Current?.Dispatcher;
-                if (dispatcher != null)
+                Application.Current.Dispatcher.BeginInvoke((Action)delegate
                 {
-                    if (dispatcher.CheckAccess())
+                    try
                     {
                         action();
-                        return;
                     }
-
-                    dispatcher.BeginInvoke((Action)delegate
+                    catch (Exception ex)
                     {
-                        try
-                        {
-                            action();
-                        }
-                        catch (Exception ex)
-                        {
-                            WriteLog.Error("BeginInvoke Error: ", ex);
-                        }
-                    });
-                }
+                        WriteLog.Error("BeginInvoke Error: ", ex);
+                    }
+                });
             }
             catch
             {
-                // The Dispatcher might throw during closing
+                // The Dispatcher might throw here during closing and after the UI has already been disposed
             }
         }
     }

@@ -184,7 +184,7 @@ namespace BTNET.BVVM
 
                     if (updated)
                     {
-                        Invoke.InvokeUI(() =>
+                        InvokeUI.CheckAccess(() =>
                         {
                             Current = new ObservableCollection<OrderBase>(temp.OrderByDescending(d => d.CreateTime));
                         });
@@ -379,7 +379,7 @@ namespace BTNET.BVVM
             {
                 foreach (var order in Current)
                 {
-                    Invoke.InvokeUI(() =>
+                    InvokeUI.CheckAccess(() =>
                     {
                         if (_currentInterestRate > 0)
                         {

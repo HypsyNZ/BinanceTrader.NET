@@ -223,7 +223,7 @@ namespace BTNET.VM.ViewModels
             var alert = o as AlertItem;
             if (alert != null)
             {
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     WriteLog.Info("Removed Alert for: " + alert.AlertSymbol + " at " + alert.AlertPrice);
                     Alerts.Remove(alert);

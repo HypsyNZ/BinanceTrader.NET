@@ -49,16 +49,41 @@ namespace BTNET.BVVM
 
                     if (Static.CurrentTradingMode == TradingMode.Spot)
                     {
-                        if (!test.IsSpotTradingAllowed)
+                        if (!test.Permissions.Contains(AccountType.Spot))
                         {
                             return true;
                         }
                     }
-                    else
+                    else if (Static.CurrentTradingMode == TradingMode.Margin)
                     {
-                        if (!test.IsMarginTradingAllowed)
+                        if (!test.Permissions.Contains(AccountType.Margin))
                         {
                             return true;
+                        }
+
+                        if (MarginPairs.AllCross != null)
+                        {
+                            var pairExists = MarginPairs.AllCross.Where(t => t.Symbol == test.Name).FirstOrDefault();
+                            if (pairExists == null)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    else if (Static.CurrentTradingMode == TradingMode.Isolated)
+                    {
+                        if (!test.Permissions.Contains(AccountType.Margin))
+                        {
+                            return true;
+                        }
+
+                        if (MarginPairs.AllIsolated != null)
+                        {
+                            var pairExists = MarginPairs.AllIsolated.Where(t => t.Symbol == test.Name).FirstOrDefault();
+                            if (pairExists == null)
+                            {
+                                return true;
+                            }
                         }
                     }
 
@@ -76,7 +101,7 @@ namespace BTNET.BVVM
 
             if (result != null && ex != null)
             {
-                Invoke.InvokeUI(() =>
+                InvokeUI.CheckAccess(() =>
                 {
                     if (result.Success)
                     {
