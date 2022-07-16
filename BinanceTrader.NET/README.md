@@ -1,3 +1,16 @@
+### Version 2.2.0.3
+- [x] Fixed a bug that could occur if you used search during an exchange info update
+- [x] Fixed a bug that sometimes allowed you to select a symbol while the client was starting
+- [x] You can no longer select a symbol while `Current Symbol` is loading
+- [x] You can no longer select a symbol while `Trading Mode` is changing
+- [x] Fixed a UI update issue
+- [x] Renamed some things for clarity
+- [x] Will now get `All Isolated Pairs` to improve search results
+- [x] Will now get `All Margin Pairs` to improve search results
+- [x] Use `Symbol Permissions` to improve search results
+- [x] Fixed a bug in `BeginInvoke` helper that is unused anyway
+- [x] Removed extra null checks from `Invoke` helpers
+
 ### Version 2.2.0.2
 - [x] Changed when `Trade Fee` is updated for the current symbol
 - [x] Changed when `Interest Rate` is updated for the current symbol
