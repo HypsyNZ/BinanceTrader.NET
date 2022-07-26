@@ -1,3 +1,7 @@
+### Version 2.2.0.4
+- [x] Fixed a bug in `Watchlist` that could make a socket appear as disconnected
+- [x] Update Browser [`CefSharp`](<https://cefsharp.github.io/>)
+
 ### Version 2.2.0.3
 - [x] Fixed a bug that could occur if you used search during an exchange info update
 - [x] Fixed a bug that sometimes allowed you to select a symbol while the client was starting
