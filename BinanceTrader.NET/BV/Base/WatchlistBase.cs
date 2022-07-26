@@ -177,6 +177,7 @@ namespace BTNET.BV.Base
             {
                 ticker.TickerUpdated += TickerUpdated;
                 ticker.StatusChanged += TickerStatusChanged;
+                TickerStatus = ticker.CurrentStatus.TickerStatus;                
             }
             else
             {

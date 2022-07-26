@@ -762,37 +762,31 @@ namespace BTNET.BVVM
 
         private void OnChangeSymbol(object sender, bool updateQuote)
         {
-            if (CurrentlySelectedSymbol != null)
+            WriteLog.Info("Changing to Symbol: " + CurrentlySelectedSymbol!.SymbolView.Symbol);
+
+            _ = Task.Run(async () =>
             {
-                MainVM.IsCurrentlyLoading = true;
-                MainVM.SymbolSelectionHitTest = false;
-
-                WriteLog.Info("Changing to Symbol: " + CurrentlySelectedSymbol.SymbolView.Symbol);
-
-                _ = Task.Run(async () =>
+                var changed = await OnChangeSymbolAsync().ConfigureAwait(false);
+                if (changed)
                 {
-                    var changed = await OnChangeSymbolAsync().ConfigureAwait(false);
-                    if (changed)
+                    await PaddingWidthAsync().ConfigureAwait(false);
+
+                    InvokeUI.CheckAccess(() =>
                     {
-                        await PaddingWidthAsync().ConfigureAwait(false);
+                        MainVM.IsSymbolSelected = true;
+                        MainVM.IsCurrentlyLoading = false;
+                        MainVM.SymbolSelectionHitTest = true;
+                    });
 
-                        InvokeUI.CheckAccess(() =>
-                        {
-                            MainVM.IsSymbolSelected = true;
-                            MainVM.IsCurrentlyLoading = false;
-                            MainVM.SymbolSelectionHitTest = true;
-                        });
+                    _ = Orders.UpdateInterestRateAsync().ConfigureAwait(false);
+                    _ = Orders.UpdateTradeFeeAsync().ConfigureAwait(false);
 
-                        _ = Orders.UpdateInterestRateAsync().ConfigureAwait(false);
-                        _ = Orders.UpdateTradeFeeAsync().ConfigureAwait(false);
-
-                        if (updateQuote)
-                        {
-                            App.QuoteUpdateEvent?.Invoke(null, null);
-                        }
+                    if (updateQuote)
+                    {
+                        App.QuoteUpdateEvent?.Invoke(null, null);
                     }
-                }).ConfigureAwait(false);
-            }
+                }
+            }).ConfigureAwait(false);
         }
 
         private async Task<bool> OnChangeSymbolAsync()
@@ -928,6 +922,9 @@ namespace BTNET.BVVM
             get => SelectedSymbolViewModel;
             set
             {
+                MainVM.IsCurrentlyLoading = true;
+                MainVM.SymbolSelectionHitTest = false;
+
                 Quotes.AddStoredQuote();
 
                 SelectedSymbolViewModel = value;
@@ -937,8 +934,10 @@ namespace BTNET.BVVM
                 {
                     MainVM.IsSymbolSelected = false;
                 }
-
-                App.SymbolChanged?.Invoke(null, true);
+                else
+                {
+                    App.SymbolChanged?.Invoke(null, true);
+                }
             }
         }
 

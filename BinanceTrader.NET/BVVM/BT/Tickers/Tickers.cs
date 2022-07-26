@@ -43,14 +43,14 @@ namespace BTNET.BVVM.BT
         /// <returns></returns>
         public static Ticker AddTicker(string symbol)
         {
-            var ticker = GetTicker(symbol);
-            if (ticker != default)
-            {
-                return ticker;
-            }
-
             lock (TickerLock)
             {
+                var ticker = GetTicker(symbol);
+                if (ticker != default)
+                {
+                    return ticker;
+                }
+
                 ticker = new Ticker(symbol);
                 SymbolTickers.Add(ticker);
                 return ticker;

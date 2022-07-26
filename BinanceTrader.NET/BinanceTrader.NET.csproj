@@ -16,9 +16,9 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<Version>2.2.0.3</Version>
-		<FileVersion>2.2.0.3</FileVersion>
-		<AssemblyVersion>2.2.0.3</AssemblyVersion>
+		<Version>2.2.0.4</Version>
+		<FileVersion>2.2.0.4</FileVersion>
+		<AssemblyVersion>2.2.0.4</AssemblyVersion>
 		<Authors>S Christison</Authors>
 		<Company>S Christison</Company>
 		<Copyright>S Christison ©2022</Copyright>
@@ -52,10 +52,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="CefSharp.Common">
-			<Version>103.0.90</Version>
+			<Version>103.0.120</Version>
 		</PackageReference>
 		<PackageReference Include="CefSharp.Wpf">
-			<Version>103.0.90</Version>
+			<Version>103.0.120</Version>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf">
 			<Version>1.1.39</Version>
